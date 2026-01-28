@@ -1,6 +1,6 @@
 // ============================================================
-//         DISCORD AI BOT - MULTI PROVIDER v2.2
-//         Full Version dengan Semua Fitur
+//         DISCORD AI BOT - MULTI PROVIDER v2.3
+//         Pollinations Free & API Support
 // ============================================================
 
 const { 
@@ -36,33 +36,21 @@ const CONFIG = {
 };
 
 // ==================== SYSTEM PROMPT (SEPERTI CLAUDE) ====================
-const MASTER_SYSTEM_PROMPT = `Kamu adalah Aria, asisten AI yang sangat cerdas, jujur, dan helpful. Kamu memiliki kemampuan seperti Claude AI dari Anthropic.
+const MASTER_SYSTEM_PROMPT = `Kamu adalah Aria, asisten AI yang sangat cerdas, jujur, dan helpful. Kamu memiliki kemampuan seperti Claude AI.
 
-## KARAKTERISTIK UTAMA:
-1. **Jujur & Transparan**: Selalu jujur. Jika tidak tahu, katakan tidak tahu. Jangan mengarang fakta.
-2. **Logis & Analitis**: Berpikir step-by-step. Jelaskan reasoning dengan jelas.
-3. **Expert Coding**: Sangat ahli dalam programming. Berikan kode yang clean, efficient, dan well-documented.
-4. **Helpful**: Berusaha membantu sebaik mungkin dengan jawaban yang akurat dan berguna.
-5. **Bahasa Natural**: Berbicara dengan bahasa Indonesia yang natural dan friendly.
-
-## ATURAN CODING:
-- Selalu berikan kode yang bisa langsung dijalankan
-- Sertakan komentar penjelasan
-- Gunakan best practices
-- Jika ada error dalam kode user, jelaskan dengan detail
+## KARAKTERISTIK:
+1. **Jujur & Transparan**: Selalu jujur. Jika tidak tahu, katakan tidak tahu.
+2. **Logis & Analitis**: Berpikir step-by-step dengan reasoning yang jelas.
+3. **Expert Coding**: Ahli programming, berikan kode clean dan well-documented.
+4. **Helpful**: Membantu dengan jawaban akurat dan berguna.
+5. **Bahasa Natural**: Berbicara dengan bahasa Indonesia yang natural.
 
 ## ATURAN JAWABAN:
-- Untuk voice: jawab singkat 2-3 kalimat, langsung ke poin
-- Untuk text: bisa lebih detail jika diperlukan
-- JANGAN gunakan emoji berlebihan dalam respons
-- Hindari kata-kata yang tidak perlu
+- Untuk voice: jawab singkat 2-3 kalimat
+- Hindari emoji berlebihan
+- Akui keterbatasan jika ada`;
 
-## KEJUJURAN:
-- Akui keterbatasan jika ada
-- Jangan berpura-pura bisa melakukan hal yang tidak bisa
-- Berikan disclaimer jika informasi mungkin outdated`;
-
-// ==================== AI PROVIDERS & MODELS (LENGKAP) ====================
+// ==================== AI PROVIDERS & MODELS ====================
 const AI_PROVIDERS = {
     groq: {
         name: 'Groq',
@@ -74,16 +62,14 @@ const AI_PROVIDERS = {
             { id: 'llama-3.2-90b-vision-preview', name: 'Llama 3.2 90B Vision', version: 'v3.2' },
             { id: 'llama-3.2-11b-vision-preview', name: 'Llama 3.2 11B Vision', version: 'v3.2' },
             { id: 'gemma2-9b-it', name: 'Gemma2 9B', version: 'v2' },
-            { id: 'mixtral-8x7b-32768', name: 'Mixtral 8x7B', version: '8x7B' },
-            { id: 'whisper-large-v3', name: 'Whisper Large V3 (STT)', version: 'v3' },
-            { id: 'whisper-large-v3-turbo', name: 'Whisper Large V3 Turbo', version: 'v3-turbo' }
+            { id: 'mixtral-8x7b-32768', name: 'Mixtral 8x7B', version: '8x7B' }
         ]
     },
     pollinations_free: {
         name: 'Pollinations (Free)',
         requiresKey: false,
         models: [
-            { id: 'openai', name: 'OpenAI GPT', version: 'GPT-4.1' },
+            { id: 'openai', name: 'OpenAI GPT', version: 'GPT-4.1-nano' },
             { id: 'openai-large', name: 'OpenAI Large', version: 'GPT-4.1-large' },
             { id: 'openai-reasoning', name: 'OpenAI Reasoning', version: 'o3-mini' },
             { id: 'qwen', name: 'Qwen', version: 'Qwen3' },
@@ -91,21 +77,21 @@ const AI_PROVIDERS = {
             { id: 'llama', name: 'Llama', version: 'Llama-3.3' },
             { id: 'mistral', name: 'Mistral', version: 'Mistral-Small' },
             { id: 'mistral-large', name: 'Mistral Large', version: 'Mistral-Large' },
-            { id: 'unity', name: 'Unity', version: 'Unity-v1' },
-            { id: 'midijourney', name: 'Midijourney', version: 'v1' },
-            { id: 'rtist', name: 'Rtist', version: 'v1' },
-            { id: 'searchgpt', name: 'SearchGPT', version: 'v1' },
-            { id: 'evil', name: 'Evil Mode', version: 'uncensored' },
             { id: 'deepseek', name: 'DeepSeek', version: 'V3' },
             { id: 'deepseek-r1', name: 'DeepSeek R1', version: 'R1' },
             { id: 'deepseek-reasoner', name: 'DeepSeek Reasoner', version: 'R1-Reasoner' },
-            { id: 'claude-hybridspace', name: 'Claude Hybridspace', version: 'Claude-3.5' },
             { id: 'gemini', name: 'Gemini', version: '2.5-Pro' },
             { id: 'gemini-thinking', name: 'Gemini Thinking', version: '2.5-Flash-Thinking' },
+            { id: 'claude-hybridspace', name: 'Claude Hybridspace', version: 'Claude-3.5' },
+            { id: 'phi', name: 'Phi', version: 'Phi-4' },
+            { id: 'unity', name: 'Unity', version: 'Unity-v1' },
+            { id: 'midijourney', name: 'Midijourney', version: 'v1' },
+            { id: 'searchgpt', name: 'SearchGPT', version: 'v1' },
+            { id: 'evil', name: 'Evil Mode', version: 'uncensored' },
             { id: 'hormoz', name: 'Hormoz', version: 'v1' },
-            { id: 'hypnosis-tracy', name: 'Hypnosis Tracy', version: 'v1' },
             { id: 'sur', name: 'Sur', version: 'v1' },
-            { id: 'llama-scaleway', name: 'Llama Scaleway', version: 'Llama-3.1-70B' }
+            { id: 'llama-scaleway', name: 'Llama Scaleway', version: 'Llama-3.1-70B' },
+            { id: 'llamalight', name: 'Llama Light', version: 'Llama-3.3-70B' }
         ]
     },
     pollinations_api: {
@@ -113,10 +99,13 @@ const AI_PROVIDERS = {
         requiresKey: true,
         keyEnv: 'POLLINATIONS_API_KEY',
         models: [
-            { id: 'openai', name: 'OpenAI GPT (API)', version: 'GPT-4.1' },
-            { id: 'openai-large', name: 'OpenAI Large (API)', version: 'GPT-4.1-large' },
-            { id: 'claude', name: 'Claude (API)', version: 'Claude-3.5' },
-            { id: 'gemini', name: 'Gemini (API)', version: '2.5-Pro' }
+            { id: 'openai', name: 'OpenAI GPT', version: 'GPT-4.1' },
+            { id: 'openai-fast', name: 'OpenAI Fast', version: 'GPT-4.1-fast' },
+            { id: 'openai-large', name: 'OpenAI Large', version: 'GPT-4.1-large' },
+            { id: 'claude', name: 'Claude', version: 'Claude-3.5' },
+            { id: 'claude-fast', name: 'Claude Fast', version: 'Claude-3.5-fast' },
+            { id: 'gemini', name: 'Gemini', version: '2.5-Pro' },
+            { id: 'deepseek', name: 'DeepSeek', version: 'V3' }
         ]
     },
     openrouter: {
@@ -128,25 +117,13 @@ const AI_PROVIDERS = {
             { id: 'qwen/qwen3-14b:free', name: 'Qwen3 14B', version: '14B-free' },
             { id: 'qwen/qwen3-32b:free', name: 'Qwen3 32B', version: '32B-free' },
             { id: 'deepseek/deepseek-r1t-chimera:free', name: 'DeepSeek R1T Chimera', version: 'R1T-free' },
-            { id: 'deepseek/deepseek-r1t2-chimera:free', name: 'DeepSeek R1T2 Chimera', version: 'R1T2-free' },
             { id: 'google/gemma-3-4b:free', name: 'Gemma 3 4B', version: '4B-free' },
             { id: 'google/gemma-3-12b:free', name: 'Gemma 3 12B', version: '12B-free' },
             { id: 'google/gemma-3-27b:free', name: 'Gemma 3 27B', version: '27B-free' },
-            { id: 'google/gemma-3n-2b:free', name: 'Gemma 3n 2B', version: '2B-free' },
-            { id: 'mistralai/mistral-small-3.1-24b:free', name: 'Mistral Small 3.1 24B', version: '24B-free' },
+            { id: 'mistralai/mistral-small-3.1-24b:free', name: 'Mistral Small 24B', version: '24B-free' },
             { id: 'nvidia/llama-3.1-nemotron-70b-instruct:free', name: 'Nemotron 70B', version: '70B-free' },
-            { id: 'nvidia/nemotron-nano-9b-v2:free', name: 'Nemotron Nano 9B V2', version: '9B-free' },
             { id: 'meta-llama/llama-3.2-3b-instruct:free', name: 'Llama 3.2 3B', version: '3B-free' },
-            { id: 'meta-llama/llama-3.2-1b-instruct:free', name: 'Llama 3.2 1B', version: '1B-free' },
-            { id: 'thudm/glm-4.5-air:free', name: 'GLM 4.5 Air', version: '4.5-free' },
-            { id: 'thudm/glm-z1-32b:free', name: 'GLM Z1 32B', version: '32B-free' },
-            { id: 'featherless/trinity-mini:free', name: 'Trinity Mini', version: 'mini-free' },
-            { id: 'featherless/trinity-large-preview:free', name: 'Trinity Large', version: 'large-free' },
-            { id: 'upstage/solar-pro-3:free', name: 'Solar Pro 3', version: 'pro3-free' },
-            { id: 'liquid/lfm2.5-1.2b-thinking:free', name: 'LFM 1.2B Thinking', version: '1.2B-free' },
-            { id: 'liquid/lfm2.5-1.2b-instruct:free', name: 'LFM 1.2B Instruct', version: '1.2B-free' },
-            { id: 'allenai/molmo2-8b:free', name: 'Molmo2 8B', version: '8B-free' },
-            { id: 'moonshotai/kimi-vl-a3b-thinking:free', name: 'Kimi VL A3B', version: 'A3B-free' }
+            { id: 'thudm/glm-4.5-air:free', name: 'GLM 4.5 Air', version: '4.5-free' }
         ]
     },
     huggingface: {
@@ -155,16 +132,14 @@ const AI_PROVIDERS = {
         keyEnv: 'HUGGINGFACE_API_KEY',
         models: [
             { id: 'meta-llama/Llama-3.1-8B-Instruct', name: 'Llama 3.1 8B', version: '3.1-8B' },
-            { id: 'meta-llama/Llama-3.2-3B-Instruct', name: 'Llama 3.2 3B', version: '3.2-3B' },
             { id: 'mistralai/Mistral-7B-Instruct-v0.3', name: 'Mistral 7B', version: '7B-v0.3' },
             { id: 'microsoft/Phi-3-mini-4k-instruct', name: 'Phi-3 Mini', version: 'mini-4k' },
-            { id: 'Qwen/Qwen2.5-72B-Instruct', name: 'Qwen 2.5 72B', version: '2.5-72B' },
-            { id: 'google/gemma-2-9b-it', name: 'Gemma 2 9B', version: '2-9B' }
+            { id: 'Qwen/Qwen2.5-72B-Instruct', name: 'Qwen 2.5 72B', version: '2.5-72B' }
         ]
     }
 };
 
-// ==================== TTS PROVIDERS & VOICES (LENGKAP) ====================
+// ==================== TTS PROVIDERS & VOICES ====================
 const TTS_PROVIDERS = {
     edge: {
         name: 'Edge TTS',
@@ -175,19 +150,9 @@ const TTS_PROVIDERS = {
             { id: 'en-US-JennyNeural', name: 'Jenny (EN Female)', lang: 'en' },
             { id: 'en-US-GuyNeural', name: 'Guy (EN Male)', lang: 'en' },
             { id: 'en-US-AriaNeural', name: 'Aria (EN Female)', lang: 'en' },
-            { id: 'en-GB-SoniaNeural', name: 'Sonia (UK Female)', lang: 'en' },
-            { id: 'en-GB-RyanNeural', name: 'Ryan (UK Male)', lang: 'en' },
-            { id: 'en-AU-NatashaNeural', name: 'Natasha (AU Female)', lang: 'en' },
             { id: 'ja-JP-NanamiNeural', name: 'Nanami (JP Female)', lang: 'ja' },
-            { id: 'ja-JP-KeitaNeural', name: 'Keita (JP Male)', lang: 'ja' },
             { id: 'ko-KR-SunHiNeural', name: 'SunHi (KR Female)', lang: 'ko' },
-            { id: 'ko-KR-InJoonNeural', name: 'InJoon (KR Male)', lang: 'ko' },
-            { id: 'zh-CN-XiaoxiaoNeural', name: 'Xiaoxiao (CN Female)', lang: 'zh' },
-            { id: 'zh-CN-YunxiNeural', name: 'Yunxi (CN Male)', lang: 'zh' },
-            { id: 'de-DE-KatjaNeural', name: 'Katja (DE Female)', lang: 'de' },
-            { id: 'fr-FR-DeniseNeural', name: 'Denise (FR Female)', lang: 'fr' },
-            { id: 'es-ES-ElviraNeural', name: 'Elvira (ES Female)', lang: 'es' },
-            { id: 'pt-BR-FranciscaNeural', name: 'Francisca (BR Female)', lang: 'pt' }
+            { id: 'zh-CN-XiaoxiaoNeural', name: 'Xiaoxiao (CN Female)', lang: 'zh' }
         ]
     },
     pollinations: {
@@ -209,20 +174,16 @@ const TTS_PROVIDERS = {
         voices: [
             { id: '21m00Tcm4TlvDq8ikWAM', name: 'Rachel (Calm)', lang: 'multi' },
             { id: 'EXAVITQu4vr4xnSDxMaL', name: 'Bella (Soft)', lang: 'multi' },
-            { id: 'MF3mGyEYCl7XYWbV9V6O', name: 'Elli (Friendly)', lang: 'multi' },
             { id: 'pNInz6obpgDQGcFmaJgB', name: 'Adam (Deep)', lang: 'multi' },
-            { id: 'ErXwobaYiN019PkySvjV', name: 'Antoni (Warm)', lang: 'multi' },
-            { id: 'TxGEqnHWrfWFTfGW9XjX', name: 'Josh (Young)', lang: 'multi' },
-            { id: 'VR6AewLTigWG4xSOukaG', name: 'Arnold (Strong)', lang: 'multi' },
-            { id: 'yoZ06aMxZJJ28mfd3POQ', name: 'Sam (Raspy)', lang: 'multi' }
+            { id: 'ErXwobaYiN019PkySvjV', name: 'Antoni (Warm)', lang: 'multi' }
         ]
     }
 };
 
 // ==================== DEFAULT SETTINGS ====================
 const DEFAULT_SETTINGS = {
-    aiProvider: 'groq',
-    aiModel: 'llama-3.3-70b-versatile',
+    aiProvider: 'pollinations_free',
+    aiModel: 'openai',
     ttsProvider: 'edge',
     ttsVoice: 'id-ID-GadisNeural',
     mode: 'voice',
@@ -239,86 +200,28 @@ const client = new Client({
     ]
 });
 
-// Storage
 const guildSettings = new Map();
 const conversations = new Map();
 const voiceConnections = new Map();
 const audioPlayers = new Map();
 
-// ==================== UTILITY: HAPUS EMOJI UNTUK TTS ====================
+// ==================== UTILITY: HAPUS EMOJI ====================
 function removeEmojisForTTS(text) {
-    // Hapus semua emoji unicode
-    let cleaned = text.replace(/[\u{1F600}-\u{1F64F}]/gu, ''); // Emoticons
-    cleaned = cleaned.replace(/[\u{1F300}-\u{1F5FF}]/gu, ''); // Misc Symbols
-    cleaned = cleaned.replace(/[\u{1F680}-\u{1F6FF}]/gu, ''); // Transport
-    cleaned = cleaned.replace(/[\u{1F1E0}-\u{1F1FF}]/gu, ''); // Flags
-    cleaned = cleaned.replace(/[\u{2600}-\u{26FF}]/gu, ''); // Misc symbols
-    cleaned = cleaned.replace(/[\u{2700}-\u{27BF}]/gu, ''); // Dingbats
-    cleaned = cleaned.replace(/[\u{FE00}-\u{FE0F}]/gu, ''); // Variation Selectors
-    cleaned = cleaned.replace(/[\u{1F900}-\u{1F9FF}]/gu, ''); // Supplemental
-    cleaned = cleaned.replace(/[\u{1FA00}-\u{1FA6F}]/gu, ''); // Chess
-    cleaned = cleaned.replace(/[\u{1FA70}-\u{1FAFF}]/gu, ''); // Symbols
-    cleaned = cleaned.replace(/[\u{231A}-\u{231B}]/gu, ''); // Watch
-    cleaned = cleaned.replace(/[\u{23E9}-\u{23F3}]/gu, ''); // Media
-    cleaned = cleaned.replace(/[\u{23F8}-\u{23FA}]/gu, ''); // Media
-    cleaned = cleaned.replace(/[\u{25AA}-\u{25AB}]/gu, ''); // Squares
-    cleaned = cleaned.replace(/[\u{25B6}]/gu, ''); // Play
-    cleaned = cleaned.replace(/[\u{25C0}]/gu, ''); // Reverse
-    cleaned = cleaned.replace(/[\u{25FB}-\u{25FE}]/gu, ''); // Squares
-    cleaned = cleaned.replace(/[\u{2614}-\u{2615}]/gu, ''); // Umbrella, Coffee
-    cleaned = cleaned.replace(/[\u{2648}-\u{2653}]/gu, ''); // Zodiac
-    cleaned = cleaned.replace(/[\u{267F}]/gu, ''); // Wheelchair
-    cleaned = cleaned.replace(/[\u{2693}]/gu, ''); // Anchor
-    cleaned = cleaned.replace(/[\u{26A1}]/gu, ''); // Lightning
-    cleaned = cleaned.replace(/[\u{26AA}-\u{26AB}]/gu, ''); // Circles
-    cleaned = cleaned.replace(/[\u{26BD}-\u{26BE}]/gu, ''); // Sports
-    cleaned = cleaned.replace(/[\u{26C4}-\u{26C5}]/gu, ''); // Weather
-    cleaned = cleaned.replace(/[\u{26CE}]/gu, ''); // Ophiuchus
-    cleaned = cleaned.replace(/[\u{26D4}]/gu, ''); // No entry
-    cleaned = cleaned.replace(/[\u{26EA}]/gu, ''); // Church
-    cleaned = cleaned.replace(/[\u{26F2}-\u{26F3}]/gu, ''); // Fountain, Golf
-    cleaned = cleaned.replace(/[\u{26F5}]/gu, ''); // Sailboat
-    cleaned = cleaned.replace(/[\u{26FA}]/gu, ''); // Tent
-    cleaned = cleaned.replace(/[\u{26FD}]/gu, ''); // Fuel pump
-    cleaned = cleaned.replace(/[\u{2702}]/gu, ''); // Scissors
-    cleaned = cleaned.replace(/[\u{2705}]/gu, ''); // Check
-    cleaned = cleaned.replace(/[\u{2708}-\u{270D}]/gu, ''); // Airplane to Writing
-    cleaned = cleaned.replace(/[\u{270F}]/gu, ''); // Pencil
-    cleaned = cleaned.replace(/[\u{2712}]/gu, ''); // Black nib
-    cleaned = cleaned.replace(/[\u{2714}]/gu, ''); // Check mark
-    cleaned = cleaned.replace(/[\u{2716}]/gu, ''); // X mark
-    cleaned = cleaned.replace(/[\u{271D}]/gu, ''); // Cross
-    cleaned = cleaned.replace(/[\u{2721}]/gu, ''); // Star of David
-    cleaned = cleaned.replace(/[\u{2728}]/gu, ''); // Sparkles
-    cleaned = cleaned.replace(/[\u{2733}-\u{2734}]/gu, ''); // Eight spoked
-    cleaned = cleaned.replace(/[\u{2744}]/gu, ''); // Snowflake
-    cleaned = cleaned.replace(/[\u{2747}]/gu, ''); // Sparkle
-    cleaned = cleaned.replace(/[\u{274C}]/gu, ''); // Cross mark
-    cleaned = cleaned.replace(/[\u{274E}]/gu, ''); // Cross mark
-    cleaned = cleaned.replace(/[\u{2753}-\u{2755}]/gu, ''); // Question marks
-    cleaned = cleaned.replace(/[\u{2757}]/gu, ''); // Exclamation
-    cleaned = cleaned.replace(/[\u{2763}-\u{2764}]/gu, ''); // Heart
-    cleaned = cleaned.replace(/[\u{2795}-\u{2797}]/gu, ''); // Math
-    cleaned = cleaned.replace(/[\u{27A1}]/gu, ''); // Arrow
-    cleaned = cleaned.replace(/[\u{27B0}]/gu, ''); // Curly loop
-    cleaned = cleaned.replace(/[\u{27BF}]/gu, ''); // Double curly
-    cleaned = cleaned.replace(/[\u{2934}-\u{2935}]/gu, ''); // Arrows
-    cleaned = cleaned.replace(/[\u{2B05}-\u{2B07}]/gu, ''); // Arrows
-    cleaned = cleaned.replace(/[\u{2B1B}-\u{2B1C}]/gu, ''); // Squares
-    cleaned = cleaned.replace(/[\u{2B50}]/gu, ''); // Star
-    cleaned = cleaned.replace(/[\u{2B55}]/gu, ''); // Circle
-    cleaned = cleaned.replace(/[\u{3030}]/gu, ''); // Wavy dash
-    cleaned = cleaned.replace(/[\u{303D}]/gu, ''); // Part alternation
-    cleaned = cleaned.replace(/[\u{3297}]/gu, ''); // Circled Ideograph
-    cleaned = cleaned.replace(/[\u{3299}]/gu, ''); // Circled Ideograph
-    
-    // Hapus text emoji seperti :emoji_name:
-    cleaned = cleaned.replace(/:[a-zA-Z0-9_]+:/g, '');
-    
-    // Hapus multiple spaces
-    cleaned = cleaned.replace(/\s+/g, ' ').trim();
-    
-    return cleaned;
+    return text
+        .replace(/[\u{1F300}-\u{1F9FF}]/gu, '')
+        .replace(/[\u{2600}-\u{26FF}]/gu, '')
+        .replace(/[\u{2700}-\u{27BF}]/gu, '')
+        .replace(/[\u{1F000}-\u{1F02F}]/gu, '')
+        .replace(/[\u{1F0A0}-\u{1F0FF}]/gu, '')
+        .replace(/[\u{1F100}-\u{1F1FF}]/gu, '')
+        .replace(/[\u{1F200}-\u{1F2FF}]/gu, '')
+        .replace(/[\u{E000}-\u{F8FF}]/gu, '')
+        .replace(/[\u{FE00}-\u{FE0F}]/gu, '')
+        .replace(/[\u{1F900}-\u{1F9FF}]/gu, '')
+        .replace(/[\u{1FA00}-\u{1FAFF}]/gu, '')
+        .replace(/:[a-zA-Z0-9_]+:/g, '')
+        .replace(/\s+/g, ' ')
+        .trim();
 }
 
 // ==================== SETTINGS MANAGEMENT ====================
@@ -331,24 +234,17 @@ function loadSettings() {
             });
             console.log(`📂 Loaded settings for ${guildSettings.size} guilds`);
         }
-    } catch (e) {
-        console.error('Failed to load settings:', e.message);
-    }
+    } catch (e) { console.error('Load settings error:', e.message); }
 }
 
 function saveSettings() {
     try {
         const dir = path.dirname(CONFIG.dataPath);
         if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-        
         const data = {};
-        guildSettings.forEach((settings, guildId) => {
-            data[guildId] = settings;
-        });
+        guildSettings.forEach((s, id) => data[id] = s);
         fs.writeFileSync(CONFIG.dataPath, JSON.stringify(data, null, 2));
-    } catch (e) {
-        console.error('Failed to save settings:', e.message);
-    }
+    } catch (e) { console.error('Save settings error:', e.message); }
 }
 
 function getSettings(guildId) {
@@ -369,11 +265,9 @@ function isAdmin(userId) {
     return CONFIG.adminIds.includes(userId);
 }
 
-// ==================== GET MODEL INFO ====================
 function getModelInfo(provider, modelId) {
     const p = AI_PROVIDERS[provider];
     if (!p) return { name: modelId, version: 'unknown' };
-    
     const model = p.models.find(m => m.id === modelId);
     return model || { name: modelId, version: 'unknown' };
 }
@@ -387,7 +281,7 @@ function httpRequest(options, body) {
             res.on('end', () => resolve({ data, statusCode: res.statusCode }));
         });
         req.on('error', reject);
-        req.setTimeout(60000, () => reject(new Error('Request timeout')));
+        req.setTimeout(60000, () => { req.destroy(); reject(new Error('Timeout')); });
         if (body) req.write(body);
         req.end();
     });
@@ -401,21 +295,20 @@ function httpRequestBinary(options, body) {
             res.on('end', () => resolve(Buffer.concat(chunks)));
         });
         req.on('error', reject);
-        req.setTimeout(30000, () => reject(new Error('Request timeout')));
+        req.setTimeout(30000, () => { req.destroy(); reject(new Error('Timeout')); });
         if (body) req.write(body);
         req.end();
     });
 }
 
-// ==================== AI PROVIDERS IMPLEMENTATION ====================
+// ==================== AI PROVIDERS ====================
 async function callAI(guildId, userMessage, history = []) {
     const settings = getSettings(guildId);
     const { aiProvider, aiModel, systemPrompt } = settings;
-    
     const startTime = Date.now();
-    let response, modelInfo;
     
     try {
+        let response;
         switch (aiProvider) {
             case 'groq':
                 response = await callGroq(aiModel, userMessage, history, systemPrompt);
@@ -437,34 +330,32 @@ async function callAI(guildId, userMessage, history = []) {
         }
         
         const latency = Date.now() - startTime;
-        modelInfo = getModelInfo(aiProvider, aiModel);
+        const modelInfo = getModelInfo(aiProvider, aiModel);
         
         return {
             text: response,
             provider: AI_PROVIDERS[aiProvider]?.name || aiProvider,
             model: modelInfo.name,
             version: modelInfo.version,
-            latency: latency
+            latency
         };
-        
     } catch (error) {
         console.error(`AI Error (${aiProvider}):`, error.message);
         
-        // Auto-fallback ke Pollinations Free
+        // Fallback ke Pollinations Free
         if (aiProvider !== 'pollinations_free') {
             console.log('Falling back to Pollinations Free...');
             try {
                 const fallbackResponse = await callPollinationsFree('openai', userMessage, history, systemPrompt);
-                const latency = Date.now() - startTime;
                 return {
                     text: fallbackResponse,
-                    provider: 'Pollinations (Fallback)',
+                    provider: 'Pollinations Free (Fallback)',
                     model: 'OpenAI GPT',
-                    version: 'GPT-4.1',
-                    latency: latency
+                    version: 'GPT-4.1-nano',
+                    latency: Date.now() - startTime
                 };
             } catch (e) {
-                throw new Error('Semua AI provider gagal: ' + e.message);
+                throw new Error('Semua provider gagal: ' + e.message);
             }
         }
         throw error;
@@ -474,7 +365,7 @@ async function callAI(guildId, userMessage, history = []) {
 // Groq API
 async function callGroq(model, message, history, systemPrompt) {
     const apiKey = process.env.GROQ_API_KEY;
-    if (!apiKey) throw new Error('GROQ_API_KEY tidak ditemukan');
+    if (!apiKey) throw new Error('GROQ_API_KEY tidak ada');
     
     const messages = [
         { role: 'system', content: systemPrompt },
@@ -490,19 +381,14 @@ async function callGroq(model, message, history, systemPrompt) {
             'Authorization': `Bearer ${apiKey}`,
             'Content-Type': 'application/json'
         }
-    }, JSON.stringify({
-        model: model,
-        messages: messages,
-        max_tokens: 1000,
-        temperature: 0.7
-    }));
+    }, JSON.stringify({ model, messages, max_tokens: 1000, temperature: 0.7 }));
     
     const result = JSON.parse(data);
     if (result.error) throw new Error(result.error.message);
     return result.choices[0].message.content;
 }
 
-// Pollinations Free API (Tanpa API Key!)
+// ========== POLLINATIONS FREE (Tanpa API Key) ==========
 async function callPollinationsFree(model, message, history, systemPrompt) {
     // Build prompt
     let prompt = systemPrompt + '\n\n';
@@ -511,30 +397,37 @@ async function callPollinationsFree(model, message, history, systemPrompt) {
     });
     prompt += `User: ${message}\nAssistant:`;
     
-    const encoded = encodeURIComponent(prompt.slice(0, 4000));
+    const encoded = encodeURIComponent(prompt.slice(0, 3000));
     const seed = Math.floor(Math.random() * 1000000);
     
     return new Promise((resolve, reject) => {
+        // ENDPOINT FREE: text.pollinations.ai
         const url = `https://text.pollinations.ai/${encoded}?model=${model}&seed=${seed}`;
         
-        https.get(url, (res) => {
+        https.get(url, { timeout: 60000 }, (res) => {
             let data = '';
             res.on('data', chunk => data += chunk);
             res.on('end', () => {
                 if (res.statusCode === 200 && data.trim()) {
-                    resolve(data.trim());
+                    let response = data.trim();
+                    if (response.startsWith('Assistant:')) {
+                        response = response.slice(10).trim();
+                    }
+                    resolve(response);
+                } else if (res.statusCode === 429) {
+                    reject(new Error('Rate limited'));
                 } else {
-                    reject(new Error(`Pollinations Free error: ${res.statusCode} - ${data.slice(0, 200)}`));
+                    reject(new Error(`HTTP ${res.statusCode}`));
                 }
             });
-        }).on('error', reject);
+        }).on('error', reject).on('timeout', () => reject(new Error('Timeout')));
     });
 }
 
-// Pollinations API (Dengan API Key)
+// ========== POLLINATIONS API (Dengan API Key) ==========
 async function callPollinationsAPI(model, message, history, systemPrompt) {
     const apiKey = process.env.POLLINATIONS_API_KEY;
-    if (!apiKey) throw new Error('POLLINATIONS_API_KEY tidak ditemukan');
+    if (!apiKey) throw new Error('POLLINATIONS_API_KEY tidak ada. Dapatkan di https://enter.pollinations.ai');
     
     const messages = [
         { role: 'system', content: systemPrompt },
@@ -542,29 +435,30 @@ async function callPollinationsAPI(model, message, history, systemPrompt) {
         { role: 'user', content: message }
     ];
     
+    // ENDPOINT API: gen.pollinations.ai
     const { data, statusCode } = await httpRequest({
-        hostname: 'text.pollinations.ai',
-        path: '/openai',
+        hostname: 'gen.pollinations.ai',
+        path: '/v1/chat/completions',
         method: 'POST',
         headers: {
             'Authorization': `Bearer ${apiKey}`,
             'Content-Type': 'application/json'
         }
-    }, JSON.stringify({
-        model: model,
-        messages: messages,
-        max_tokens: 1000
-    }));
+    }, JSON.stringify({ model, messages, max_tokens: 1000, temperature: 0.7, stream: false }));
     
-    if (statusCode !== 200) throw new Error(`Pollinations API error: ${statusCode}`);
+    if (statusCode === 401) throw new Error('API Key tidak valid');
+    if (statusCode === 402) throw new Error('Saldo Pollen tidak cukup');
+    if (statusCode !== 200) throw new Error(`HTTP ${statusCode}`);
+    
     const result = JSON.parse(data);
+    if (result.error) throw new Error(result.error.message || result.error);
     return result.choices[0].message.content;
 }
 
 // OpenRouter API
 async function callOpenRouter(model, message, history, systemPrompt) {
     const apiKey = process.env.OPENROUTER_API_KEY;
-    if (!apiKey) throw new Error('OPENROUTER_API_KEY tidak ditemukan');
+    if (!apiKey) throw new Error('OPENROUTER_API_KEY tidak ada');
     
     const messages = [
         { role: 'system', content: systemPrompt },
@@ -578,15 +472,9 @@ async function callOpenRouter(model, message, history, systemPrompt) {
         method: 'POST',
         headers: {
             'Authorization': `Bearer ${apiKey}`,
-            'Content-Type': 'application/json',
-            'HTTP-Referer': 'https://discord.com',
-            'X-Title': 'Discord AI Bot'
+            'Content-Type': 'application/json'
         }
-    }, JSON.stringify({
-        model: model,
-        messages: messages,
-        max_tokens: 1000
-    }));
+    }, JSON.stringify({ model, messages, max_tokens: 1000 }));
     
     const result = JSON.parse(data);
     if (result.error) throw new Error(result.error.message);
@@ -596,11 +484,11 @@ async function callOpenRouter(model, message, history, systemPrompt) {
 // HuggingFace API
 async function callHuggingFace(model, message, history, systemPrompt) {
     const apiKey = process.env.HUGGINGFACE_API_KEY;
-    if (!apiKey) throw new Error('HUGGINGFACE_API_KEY tidak ditemukan');
+    if (!apiKey) throw new Error('HUGGINGFACE_API_KEY tidak ada');
     
     const prompt = `${systemPrompt}\n\nUser: ${message}\nAssistant:`;
     
-    const { data, statusCode } = await httpRequest({
+    const { data } = await httpRequest({
         hostname: 'api-inference.huggingface.co',
         path: `/models/${model}`,
         method: 'POST',
@@ -608,10 +496,7 @@ async function callHuggingFace(model, message, history, systemPrompt) {
             'Authorization': `Bearer ${apiKey}`,
             'Content-Type': 'application/json'
         }
-    }, JSON.stringify({
-        inputs: prompt,
-        parameters: { max_new_tokens: 500, temperature: 0.7 }
-    }));
+    }, JSON.stringify({ inputs: prompt, parameters: { max_new_tokens: 500 } }));
     
     const result = JSON.parse(data);
     if (result.error) throw new Error(result.error);
@@ -619,21 +504,16 @@ async function callHuggingFace(model, message, history, systemPrompt) {
     return text.split('Assistant:').pop().trim();
 }
 
-// ==================== TTS IMPLEMENTATION ====================
+// ==================== TTS ====================
 async function generateTTS(guildId, text) {
     const settings = getSettings(guildId);
     const { ttsProvider, ttsVoice } = settings;
     
-    // HAPUS EMOJI sebelum TTS
     const cleanText = removeEmojisForTTS(text);
+    if (!cleanText || cleanText.length < 2) return null;
     
-    if (!cleanText || cleanText.length < 2) {
-        throw new Error('Text too short after removing emojis');
-    }
-    
-    const tempDir = './temp';
-    if (!fs.existsSync(tempDir)) fs.mkdirSync(tempDir, { recursive: true });
-    const outputPath = path.join(tempDir, `tts_${Date.now()}.mp3`);
+    if (!fs.existsSync('./temp')) fs.mkdirSync('./temp', { recursive: true });
+    const outputPath = `./temp/tts_${Date.now()}.mp3`;
     
     try {
         switch (ttsProvider) {
@@ -648,64 +528,36 @@ async function generateTTS(guildId, text) {
         }
     } catch (error) {
         console.error(`TTS Error (${ttsProvider}):`, error.message);
-        
-        // Fallback ke Edge TTS
         if (ttsProvider !== 'edge') {
-            console.log('Falling back to Edge TTS...');
             return await generateEdgeTTS(cleanText, 'id-ID-GadisNeural', outputPath);
         }
         throw error;
     }
 }
 
-// Edge TTS
-async function generateEdgeTTS(text, voice, outputPath) {
-    const sanitized = text
-        .replace(/"/g, "'")
-        .replace(/`/g, "'")
-        .replace(/\$/g, '')
-        .replace(/\\/g, '')
-        .slice(0, 500);
-    
-    const cmd = `edge-tts --voice "${voice}" --text "${sanitized}" --write-media "${outputPath}"`;
-    
+function generateEdgeTTS(text, voice, outputPath) {
+    const safe = text.replace(/"/g, "'").replace(/`/g, "'").replace(/\$/g, '').slice(0, 500);
     return new Promise((resolve, reject) => {
-        exec(cmd, { timeout: 30000 }, (error) => {
-            if (error) reject(error);
-            else if (fs.existsSync(outputPath)) resolve(outputPath);
-            else reject(new Error('TTS file not created'));
-        });
+        exec(`edge-tts --voice "${voice}" --text "${safe}" --write-media "${outputPath}"`, 
+            { timeout: 30000 }, (err) => err ? reject(err) : resolve(outputPath));
     });
 }
 
-// Pollinations TTS
-async function generatePollinationsTTS(text, voice, outputPath) {
+function generatePollinationsTTS(text, voice, outputPath) {
     const encoded = encodeURIComponent(text.slice(0, 500));
-    const url = `https://text.pollinations.ai/${encoded}?model=openai-audio&voice=${voice}`;
-    
     return new Promise((resolve, reject) => {
         const file = fs.createWriteStream(outputPath);
-        https.get(url, (response) => {
-            if (response.statusCode !== 200) {
-                reject(new Error(`Pollinations TTS error: ${response.statusCode}`));
-                return;
-            }
-            response.pipe(file);
-            file.on('finish', () => {
-                file.close();
-                resolve(outputPath);
-            });
-        }).on('error', (err) => {
-            fs.unlink(outputPath, () => {});
-            reject(err);
-        });
+        https.get(`https://text.pollinations.ai/${encoded}?model=openai-audio&voice=${voice}`, (res) => {
+            if (res.statusCode !== 200) return reject(new Error(`HTTP ${res.statusCode}`));
+            res.pipe(file);
+            file.on('finish', () => { file.close(); resolve(outputPath); });
+        }).on('error', reject);
     });
 }
 
-// ElevenLabs TTS
 async function generateElevenLabsTTS(text, voiceId, outputPath) {
     const apiKey = process.env.ELEVENLABS_API_KEY;
-    if (!apiKey) throw new Error('ELEVENLABS_API_KEY tidak ditemukan');
+    if (!apiKey) throw new Error('ELEVENLABS_API_KEY tidak ada');
     
     const response = await httpRequestBinary({
         hostname: 'api.elevenlabs.io',
@@ -716,327 +568,148 @@ async function generateElevenLabsTTS(text, voiceId, outputPath) {
             'Content-Type': 'application/json',
             'xi-api-key': apiKey
         }
-    }, JSON.stringify({
-        text: text.slice(0, 500),
-        model_id: 'eleven_multilingual_v2',
-        voice_settings: {
-            stability: 0.5,
-            similarity_boost: 0.75,
-            style: 0.5,
-            use_speaker_boost: true
-        }
-    }));
+    }, JSON.stringify({ text: text.slice(0, 500), model_id: 'eleven_multilingual_v2' }));
     
     fs.writeFileSync(outputPath, response);
     return outputPath;
 }
 
-// ==================== EMBED BUILDERS ====================
+// ==================== EMBEDS & MENUS ====================
 function createSettingsEmbed(guildId) {
-    const settings = getSettings(guildId);
-    const aiProvider = AI_PROVIDERS[settings.aiProvider];
-    const ttsProvider = TTS_PROVIDERS[settings.ttsProvider];
-    const modelInfo = getModelInfo(settings.aiProvider, settings.aiModel);
+    const s = getSettings(guildId);
+    const ai = AI_PROVIDERS[s.aiProvider];
+    const tts = TTS_PROVIDERS[s.ttsProvider];
+    const model = getModelInfo(s.aiProvider, s.aiModel);
     
     return new EmbedBuilder()
         .setColor(0x5865F2)
         .setTitle('⚙️ Bot Settings')
-        .setDescription('Konfigurasi AI Bot saat ini')
         .addFields(
-            { 
-                name: '🧠 AI Provider', 
-                value: `**${aiProvider?.name || settings.aiProvider}**\nModel: \`${modelInfo.name}\`\nVersion: \`${modelInfo.version}\``, 
-                inline: true 
-            },
-            { 
-                name: '🔊 TTS Provider', 
-                value: `**${ttsProvider?.name || settings.ttsProvider}**\nVoice: \`${settings.ttsVoice}\``, 
-                inline: true 
-            },
-            { 
-                name: '📝 Mode', 
-                value: settings.mode === 'voice' ? '🔊 Text + Voice' : '📝 Text Only', 
-                inline: true 
-            }
+            { name: '🧠 AI', value: `**${ai?.name}**\n${model.name} (${model.version})`, inline: true },
+            { name: '🔊 TTS', value: `**${tts?.name}**\n${s.ttsVoice}`, inline: true },
+            { name: '📝 Mode', value: s.mode === 'voice' ? '🔊 Voice' : '📝 Text', inline: true }
         )
-        .setFooter({ text: 'Gunakan menu di bawah untuk mengubah settings' })
         .setTimestamp();
-}
-
-function createProvidersEmbed() {
-    let aiList = '';
-    Object.entries(AI_PROVIDERS).forEach(([key, provider]) => {
-        const status = provider.requiresKey ? (process.env[provider.keyEnv] ? '🟢' : '🔴') : '🟢';
-        aiList += `${status} **${provider.name}** (${provider.models.length} models)\n`;
-    });
-    
-    let ttsList = '';
-    Object.entries(TTS_PROVIDERS).forEach(([key, provider]) => {
-        const status = provider.requiresKey ? (process.env[provider.keyEnv] ? '🟢' : '🔴') : '🟢';
-        ttsList += `${status} **${provider.name}** (${provider.voices.length} voices)\n`;
-    });
-    
-    return new EmbedBuilder()
-        .setColor(0x57F287)
-        .setTitle('📋 Available Providers')
-        .addFields(
-            { name: '🧠 AI Providers', value: aiList, inline: true },
-            { name: '🔊 TTS Providers', value: ttsList, inline: true }
-        )
-        .setFooter({ text: '🟢 = Tersedia, 🔴 = API Key tidak ditemukan' });
 }
 
 function createResponseEmbed(message, question, response) {
     return new EmbedBuilder()
         .setColor(0x00D166)
-        .setAuthor({ 
-            name: message.author.displayName, 
-            iconURL: message.author.displayAvatarURL() 
-        })
+        .setAuthor({ name: message.author.displayName, iconURL: message.author.displayAvatarURL() })
         .addFields(
-            { name: '❓ Pertanyaan', value: question.slice(0, 1024), inline: false },
-            { name: '🤖 Jawaban', value: response.text.slice(0, 1024), inline: false }
+            { name: '❓ Pertanyaan', value: question.slice(0, 1024) },
+            { name: '🤖 Jawaban', value: response.text.slice(0, 1024) }
         )
-        .setFooter({ 
-            text: `${response.provider} | ${response.model} (${response.version}) | ${response.latency}ms` 
-        })
+        .setFooter({ text: `${response.provider} | ${response.model} (${response.version}) | ${response.latency}ms` })
         .setTimestamp();
 }
 
-// ==================== MENU BUILDERS ====================
 function createAIProviderMenu(guildId) {
-    const settings = getSettings(guildId);
-    
-    const options = Object.entries(AI_PROVIDERS).map(([key, provider]) => {
-        const available = !provider.requiresKey || process.env[provider.keyEnv];
-        return {
-            label: provider.name.slice(0, 25),
-            description: `${provider.models.length} models${!available ? ' (No API Key)' : ''}`.slice(0, 50),
-            value: key,
-            default: key === settings.aiProvider,
-            emoji: available ? '🟢' : '🔴'
-        };
-    });
-    
+    const s = getSettings(guildId);
+    const options = Object.entries(AI_PROVIDERS).map(([k, p]) => ({
+        label: p.name.slice(0, 25),
+        value: k,
+        default: k === s.aiProvider,
+        emoji: (!p.requiresKey || process.env[p.keyEnv]) ? '🟢' : '🔴'
+    }));
     return new ActionRowBuilder().addComponents(
-        new StringSelectMenuBuilder()
-            .setCustomId('select_ai_provider')
-            .setPlaceholder('Pilih AI Provider')
-            .addOptions(options)
+        new StringSelectMenuBuilder().setCustomId('select_ai_provider').setPlaceholder('AI Provider').addOptions(options)
     );
 }
 
 function createAIModelMenu(guildId) {
-    const settings = getSettings(guildId);
-    const provider = AI_PROVIDERS[settings.aiProvider];
-    
-    if (!provider) return null;
-    
-    const options = provider.models.slice(0, 25).map(model => ({
-        label: model.name.slice(0, 25),
-        description: `${model.id.slice(0, 45)} (${model.version})`,
-        value: model.id,
-        default: model.id === settings.aiModel
+    const s = getSettings(guildId);
+    const p = AI_PROVIDERS[s.aiProvider];
+    if (!p) return null;
+    const options = p.models.slice(0, 25).map(m => ({
+        label: m.name.slice(0, 25),
+        description: `${m.version}`.slice(0, 50),
+        value: m.id,
+        default: m.id === s.aiModel
     }));
-    
     return new ActionRowBuilder().addComponents(
-        new StringSelectMenuBuilder()
-            .setCustomId('select_ai_model')
-            .setPlaceholder(`Pilih Model (${provider.name})`)
-            .addOptions(options)
+        new StringSelectMenuBuilder().setCustomId('select_ai_model').setPlaceholder('Model').addOptions(options)
     );
 }
 
 function createTTSProviderMenu(guildId) {
-    const settings = getSettings(guildId);
-    
-    const options = Object.entries(TTS_PROVIDERS).map(([key, provider]) => {
-        const available = !provider.requiresKey || process.env[provider.keyEnv];
-        return {
-            label: provider.name,
-            description: `${provider.voices.length} voices${!available ? ' (No API Key)' : ''}`,
-            value: key,
-            default: key === settings.ttsProvider,
-            emoji: available ? '🟢' : '🔴'
-        };
-    });
-    
+    const s = getSettings(guildId);
+    const options = Object.entries(TTS_PROVIDERS).map(([k, p]) => ({
+        label: p.name,
+        value: k,
+        default: k === s.ttsProvider,
+        emoji: (!p.requiresKey || process.env[p.keyEnv]) ? '🟢' : '🔴'
+    }));
     return new ActionRowBuilder().addComponents(
-        new StringSelectMenuBuilder()
-            .setCustomId('select_tts_provider')
-            .setPlaceholder('Pilih TTS Provider')
-            .addOptions(options)
+        new StringSelectMenuBuilder().setCustomId('select_tts_provider').setPlaceholder('TTS Provider').addOptions(options)
     );
 }
 
 function createTTSVoiceMenu(guildId) {
-    const settings = getSettings(guildId);
-    const provider = TTS_PROVIDERS[settings.ttsProvider];
-    
-    if (!provider) return null;
-    
-    const options = provider.voices.slice(0, 25).map(voice => ({
-        label: voice.name,
-        description: `${voice.id} (${voice.lang})`,
-        value: voice.id,
-        default: voice.id === settings.ttsVoice
+    const s = getSettings(guildId);
+    const p = TTS_PROVIDERS[s.ttsProvider];
+    if (!p) return null;
+    const options = p.voices.slice(0, 25).map(v => ({
+        label: v.name,
+        value: v.id,
+        default: v.id === s.ttsVoice
     }));
-    
     return new ActionRowBuilder().addComponents(
-        new StringSelectMenuBuilder()
-            .setCustomId('select_tts_voice')
-            .setPlaceholder(`Pilih Voice (${provider.name})`)
-            .addOptions(options)
+        new StringSelectMenuBuilder().setCustomId('select_tts_voice').setPlaceholder('Voice').addOptions(options)
     );
 }
 
 function createModeButtons(guildId) {
-    const settings = getSettings(guildId);
-    
+    const s = getSettings(guildId);
     return new ActionRowBuilder().addComponents(
-        new ButtonBuilder()
-            .setCustomId('mode_text')
-            .setLabel('📝 Text Only')
-            .setStyle(settings.mode === 'text' ? ButtonStyle.Primary : ButtonStyle.Secondary),
-        new ButtonBuilder()
-            .setCustomId('mode_voice')
-            .setLabel('🔊 Text + Voice')
-            .setStyle(settings.mode === 'voice' ? ButtonStyle.Primary : ButtonStyle.Secondary),
-        new ButtonBuilder()
-            .setCustomId('refresh_settings')
-            .setLabel('🔄 Refresh')
-            .setStyle(ButtonStyle.Secondary)
+        new ButtonBuilder().setCustomId('mode_text').setLabel('📝 Text').setStyle(s.mode === 'text' ? ButtonStyle.Primary : ButtonStyle.Secondary),
+        new ButtonBuilder().setCustomId('mode_voice').setLabel('🔊 Voice').setStyle(s.mode === 'voice' ? ButtonStyle.Primary : ButtonStyle.Secondary),
+        new ButtonBuilder().setCustomId('refresh').setLabel('🔄').setStyle(ButtonStyle.Secondary)
     );
 }
 
 // ==================== COMMANDS ====================
-async function handleCommand(message, command, args) {
-    const guildId = message.guild.id;
-    const userId = message.author.id;
-    
-    switch (command) {
-        case 'ask':
-        case 'a':
-            await handleAsk(message, args.join(' '));
-            break;
-            
-        case 'settings':
-        case 'config':
-            if (!isAdmin(userId)) {
-                return message.reply('❌ Hanya admin yang bisa mengubah settings!');
-            }
-            await showSettings(message);
-            break;
-            
-        case 'providers':
-        case 'models':
-            await message.reply({ embeds: [createProvidersEmbed()] });
-            break;
-            
-        case 'setai':
-            if (!isAdmin(userId)) return message.reply('❌ Admin only!');
-            await setAIProvider(message, args[0]);
-            break;
-            
-        case 'setmodel':
-            if (!isAdmin(userId)) return message.reply('❌ Admin only!');
-            await setAIModel(message, args.join(' '));
-            break;
-            
-        case 'settts':
-            if (!isAdmin(userId)) return message.reply('❌ Admin only!');
-            await setTTSProvider(message, args[0]);
-            break;
-            
-        case 'setvoice':
-            if (!isAdmin(userId)) return message.reply('❌ Admin only!');
-            await setTTSVoice(message, args[0]);
-            break;
-            
-        case 'setmode':
-            if (!isAdmin(userId)) return message.reply('❌ Admin only!');
-            await setMode(message, args[0]);
-            break;
-            
-        case 'join':
-            await joinVoice(message);
-            break;
-            
-        case 'leave':
-        case 'dc':
-            await leaveVoice(message);
-            break;
-            
-        case 'status':
-            await showStatus(message);
-            break;
-            
-        case 'help':
-        case 'h':
-            await showHelp(message);
-            break;
-            
-        case 'clear':
-            if (!isAdmin(userId)) return message.reply('❌ Admin only!');
-            conversations.delete(`${guildId}-${userId}`);
-            await message.reply('🗑️ Conversation history cleared!');
-            break;
-    }
-}
-
 async function handleAsk(message, question) {
-    if (!question) {
-        return message.reply('❓ Mau tanya apa? Contoh: `!ask Apa itu AI?`');
-    }
+    if (!question) return message.reply('❓ Contoh: `!ask Apa itu AI?`');
     
     const guildId = message.guild.id;
-    const userId = message.author.id;
     const settings = getSettings(guildId);
     
     await message.channel.sendTyping();
     
     try {
-        // Get conversation history
-        const historyKey = `${guildId}-${userId}`;
+        const historyKey = `${guildId}-${message.author.id}`;
         const history = conversations.get(historyKey) || [];
         
-        // Call AI
         const response = await callAI(guildId, question, history);
         
-        // Update history
-        history.push({ role: 'user', content: question });
-        history.push({ role: 'assistant', content: response.text });
+        history.push({ role: 'user', content: question }, { role: 'assistant', content: response.text });
         conversations.set(historyKey, history.slice(-20));
         
-        // Create embed with full model info
-        const embed = createResponseEmbed(message, question, response);
+        await message.reply({ embeds: [createResponseEmbed(message, question, response)] });
         
-        await message.reply({ embeds: [embed] });
-        
-        // Generate voice if mode is voice and user in voice channel
-        if (settings.mode === 'voice') {
-            const voiceChannel = message.member?.voice.channel;
-            const connection = voiceConnections.get(guildId);
-            
-            if (voiceChannel && connection) {
-                try {
-                    const audioPath = await generateTTS(guildId, response.text);
-                    await playAudio(guildId, audioPath);
-                } catch (e) {
-                    console.error('TTS Error:', e.message);
+        if (settings.mode === 'voice' && voiceConnections.has(guildId)) {
+            try {
+                const audioPath = await generateTTS(guildId, response.text);
+                if (audioPath) {
+                    const player = audioPlayers.get(guildId);
+                    if (player) {
+                        const resource = createAudioResource(audioPath);
+                        player.play(resource);
+                        player.once(AudioPlayerStatus.Idle, () => {
+                            try { fs.unlinkSync(audioPath); } catch(e) {}
+                        });
+                    }
                 }
-            }
+            } catch (e) { console.error('TTS Error:', e.message); }
         }
-        
     } catch (error) {
-        console.error('Ask error:', error);
-        await message.reply(`❌ Error: ${error.message}`);
+        await message.reply(`❌ ${error.message}`);
     }
 }
 
 async function showSettings(message) {
     const guildId = message.guild.id;
-    
     const components = [
         createAIProviderMenu(guildId),
         createAIModelMenu(guildId),
@@ -1044,109 +717,20 @@ async function showSettings(message) {
         createTTSVoiceMenu(guildId),
         createModeButtons(guildId)
     ].filter(Boolean);
-    
-    await message.reply({
-        embeds: [createSettingsEmbed(guildId)],
-        components: components
-    });
-}
-
-async function setAIProvider(message, provider) {
-    if (!provider || !AI_PROVIDERS[provider]) {
-        const list = Object.keys(AI_PROVIDERS).join(', ');
-        return message.reply(`❌ Provider tidak valid! Pilih: ${list}`);
-    }
-    
-    const providerInfo = AI_PROVIDERS[provider];
-    if (providerInfo.requiresKey && !process.env[providerInfo.keyEnv]) {
-        return message.reply(`❌ ${providerInfo.name} membutuhkan API Key (${providerInfo.keyEnv})`);
-    }
-    
-    updateSettings(message.guild.id, 'aiProvider', provider);
-    updateSettings(message.guild.id, 'aiModel', providerInfo.models[0].id);
-    
-    const modelInfo = providerInfo.models[0];
-    await message.reply(`✅ AI Provider diubah ke **${providerInfo.name}**\nModel: \`${modelInfo.name}\` (${modelInfo.version})`);
-}
-
-async function setAIModel(message, modelId) {
-    const guildId = message.guild.id;
-    const settings = getSettings(guildId);
-    const provider = AI_PROVIDERS[settings.aiProvider];
-    
-    if (!modelId) {
-        const models = provider.models.map(m => `\`${m.id}\` - ${m.name} (${m.version})`).join('\n');
-        return message.reply(`📋 Model tersedia untuk ${provider.name}:\n${models}`);
-    }
-    
-    const model = provider.models.find(m => m.id === modelId || m.id.includes(modelId) || m.name.toLowerCase().includes(modelId.toLowerCase()));
-    if (!model) {
-        return message.reply(`❌ Model tidak ditemukan! Gunakan \`!setmodel\` untuk melihat daftar.`);
-    }
-    
-    updateSettings(guildId, 'aiModel', model.id);
-    await message.reply(`✅ Model diubah ke **${model.name}** (${model.version})\nID: \`${model.id}\``);
-}
-
-async function setTTSProvider(message, provider) {
-    if (!provider || !TTS_PROVIDERS[provider]) {
-        const list = Object.keys(TTS_PROVIDERS).join(', ');
-        return message.reply(`❌ Provider tidak valid! Pilih: ${list}`);
-    }
-    
-    const providerInfo = TTS_PROVIDERS[provider];
-    if (providerInfo.requiresKey && !process.env[providerInfo.keyEnv]) {
-        return message.reply(`❌ ${providerInfo.name} membutuhkan API Key (${providerInfo.keyEnv})`);
-    }
-    
-    updateSettings(message.guild.id, 'ttsProvider', provider);
-    updateSettings(message.guild.id, 'ttsVoice', providerInfo.voices[0].id);
-    
-    await message.reply(`✅ TTS Provider diubah ke **${providerInfo.name}**\nVoice: \`${providerInfo.voices[0].name}\``);
-}
-
-async function setTTSVoice(message, voiceId) {
-    const guildId = message.guild.id;
-    const settings = getSettings(guildId);
-    const provider = TTS_PROVIDERS[settings.ttsProvider];
-    
-    if (!voiceId) {
-        const voices = provider.voices.map(v => `\`${v.id}\` - ${v.name} (${v.lang})`).join('\n');
-        return message.reply(`📋 Voices tersedia untuk ${provider.name}:\n${voices}`);
-    }
-    
-    const voice = provider.voices.find(v => v.id === voiceId || v.id.includes(voiceId) || v.name.toLowerCase().includes(voiceId.toLowerCase()));
-    if (!voice) {
-        return message.reply(`❌ Voice tidak ditemukan! Gunakan \`!setvoice\` untuk melihat daftar.`);
-    }
-    
-    updateSettings(guildId, 'ttsVoice', voice.id);
-    await message.reply(`✅ Voice diubah ke **${voice.name}** (${voice.lang})\nID: \`${voice.id}\``);
-}
-
-async function setMode(message, mode) {
-    if (!['text', 'voice'].includes(mode)) {
-        return message.reply('❌ Mode tidak valid! Pilih: `text` atau `voice`');
-    }
-    
-    updateSettings(message.guild.id, 'mode', mode);
-    await message.reply(`✅ Mode diubah ke **${mode === 'voice' ? '🔊 Text + Voice' : '📝 Text Only'}**`);
+    await message.reply({ embeds: [createSettingsEmbed(guildId)], components });
 }
 
 async function joinVoice(message) {
-    const voiceChannel = message.member?.voice.channel;
-    if (!voiceChannel) {
-        return message.reply('❌ Kamu harus masuk voice channel dulu!');
-    }
+    const vc = message.member?.voice.channel;
+    if (!vc) return message.reply('❌ Join voice channel dulu!');
     
     try {
         const connection = joinVoiceChannel({
-            channelId: voiceChannel.id,
+            channelId: vc.id,
             guildId: message.guild.id,
             adapterCreator: message.guild.voiceAdapterCreator,
             selfDeaf: false
         });
-        
         await entersState(connection, VoiceConnectionStatus.Ready, 30000);
         
         const player = createAudioPlayer();
@@ -1155,146 +739,73 @@ async function joinVoice(message) {
         voiceConnections.set(message.guild.id, connection);
         audioPlayers.set(message.guild.id, player);
         
-        await message.reply(`✅ Joined **${voiceChannel.name}**! Sekarang aku bisa berbicara.`);
-    } catch (error) {
-        console.error('Join error:', error);
-        await message.reply('❌ Gagal join voice channel!');
-    }
+        await message.reply(`✅ Joined **${vc.name}**!`);
+    } catch (e) { await message.reply('❌ Gagal join!'); }
 }
 
 async function leaveVoice(message) {
-    const connection = voiceConnections.get(message.guild.id);
-    if (!connection) {
-        return message.reply('❌ Aku tidak sedang di voice channel!');
-    }
-    
-    connection.destroy();
+    const conn = voiceConnections.get(message.guild.id);
+    if (!conn) return message.reply('❌ Tidak di voice channel!');
+    conn.destroy();
     voiceConnections.delete(message.guild.id);
     audioPlayers.delete(message.guild.id);
-    
-    await message.reply('👋 Bye bye!');
-}
-
-async function playAudio(guildId, audioPath) {
-    const player = audioPlayers.get(guildId);
-    if (!player) return;
-    
-    try {
-        const resource = createAudioResource(audioPath);
-        player.play(resource);
-        
-        player.once(AudioPlayerStatus.Idle, () => {
-            try { fs.unlinkSync(audioPath); } catch (e) {}
-        });
-        
-        player.once('error', (error) => {
-            console.error('Player error:', error);
-            try { fs.unlinkSync(audioPath); } catch (e) {}
-        });
-    } catch (error) {
-        console.error('Play audio error:', error);
-    }
-}
-
-async function showStatus(message) {
-    const guildId = message.guild.id;
-    const settings = getSettings(guildId);
-    
-    let aiStatus = '**🧠 AI Providers:**\n';
-    for (const [key, provider] of Object.entries(AI_PROVIDERS)) {
-        const available = !provider.requiresKey || process.env[provider.keyEnv];
-        const active = key === settings.aiProvider ? ' ⬅️ Active' : '';
-        aiStatus += `${available ? '🟢' : '🔴'} **${provider.name}** (${provider.models.length} models)${active}\n`;
-    }
-    
-    let ttsStatus = '\n**🔊 TTS Providers:**\n';
-    for (const [key, provider] of Object.entries(TTS_PROVIDERS)) {
-        const available = !provider.requiresKey || process.env[provider.keyEnv];
-        const active = key === settings.ttsProvider ? ' ⬅️ Active' : '';
-        ttsStatus += `${available ? '🟢' : '🔴'} **${provider.name}** (${provider.voices.length} voices)${active}\n`;
-    }
-    
-    const modelInfo = getModelInfo(settings.aiProvider, settings.aiModel);
-    let currentConfig = `\n**⚙️ Current Config:**\n`;
-    currentConfig += `AI: ${AI_PROVIDERS[settings.aiProvider]?.name} - ${modelInfo.name} (${modelInfo.version})\n`;
-    currentConfig += `TTS: ${TTS_PROVIDERS[settings.ttsProvider]?.name} - ${settings.ttsVoice}\n`;
-    currentConfig += `Mode: ${settings.mode === 'voice' ? '🔊 Voice' : '📝 Text'}`;
-    
-    const embed = new EmbedBuilder()
-        .setColor(0x5865F2)
-        .setTitle('📊 System Status')
-        .setDescription(aiStatus + ttsStatus + currentConfig)
-        .setTimestamp();
-    
-    await message.reply({ embeds: [embed] });
+    await message.reply('👋 Bye!');
 }
 
 async function showHelp(message) {
     const embed = new EmbedBuilder()
         .setColor(0x5865F2)
-        .setTitle('🤖 AI Bot - Help')
-        .setDescription('Bot AI dengan multi-provider support')
+        .setTitle('🤖 AI Bot v2.3')
         .addFields(
-            {
-                name: '💬 Chat',
-                value: '`!ask <pertanyaan>` - Tanya AI\n`!join` - Join voice channel\n`!leave` - Leave voice channel\n`!clear` - Clear conversation',
-                inline: false
-            },
-            {
-                name: '⚙️ Settings (Admin)',
-                value: '`!settings` - Menu settings (UI)\n`!setai <provider>` - Ganti AI provider\n`!setmodel <model>` - Ganti model\n`!settts <provider>` - Ganti TTS\n`!setvoice <voice>` - Ganti voice\n`!setmode <text/voice>` - Ganti mode',
-                inline: false
-            },
-            {
-                name: '📋 Info',
-                value: '`!providers` - List providers\n`!status` - Cek status\n`!help` - Bantuan',
-                inline: false
-            },
-            {
-                name: '🧠 AI Providers',
-                value: 'Groq, Pollinations (Free), Pollinations (API), OpenRouter, HuggingFace',
-                inline: false
-            }
+            { name: '💬 Chat', value: '`!ask <q>` `!join` `!leave` `!clear`' },
+            { name: '⚙️ Admin', value: '`!settings` `!status` `!providers`' }
         )
-        .setFooter({ text: 'Multi-Provider AI Bot v2.2' });
-    
+        .setFooter({ text: 'Pollinations Free + API Support' });
     await message.reply({ embeds: [embed] });
+}
+
+async function showStatus(message) {
+    let status = '**🧠 AI:**\n';
+    Object.entries(AI_PROVIDERS).forEach(([k, p]) => {
+        const ok = !p.requiresKey || process.env[p.keyEnv];
+        status += `${ok ? '🟢' : '🔴'} ${p.name} (${p.models.length})\n`;
+    });
+    status += '\n**🔊 TTS:**\n';
+    Object.entries(TTS_PROVIDERS).forEach(([k, p]) => {
+        const ok = !p.requiresKey || process.env[p.keyEnv];
+        status += `${ok ? '🟢' : '🔴'} ${p.name} (${p.voices.length})\n`;
+    });
+    await message.reply({ embeds: [new EmbedBuilder().setColor(0x5865F2).setTitle('📊 Status').setDescription(status)] });
 }
 
 // ==================== INTERACTION HANDLER ====================
 client.on('interactionCreate', async (interaction) => {
     if (!interaction.isStringSelectMenu() && !interaction.isButton()) return;
     if (!isAdmin(interaction.user.id)) {
-        return interaction.reply({ content: '❌ Hanya admin!', ephemeral: true });
+        return interaction.reply({ content: '❌ Admin only!', ephemeral: true });
     }
     
     const guildId = interaction.guild.id;
     
     try {
         if (interaction.customId === 'select_ai_provider') {
-            const provider = interaction.values[0];
-            const providerInfo = AI_PROVIDERS[provider];
-            
-            if (providerInfo.requiresKey && !process.env[providerInfo.keyEnv]) {
-                return interaction.reply({ content: `❌ ${providerInfo.name} membutuhkan API Key!`, ephemeral: true });
+            const p = AI_PROVIDERS[interaction.values[0]];
+            if (p.requiresKey && !process.env[p.keyEnv]) {
+                return interaction.reply({ content: '❌ No API Key!', ephemeral: true });
             }
-            
-            updateSettings(guildId, 'aiProvider', provider);
-            updateSettings(guildId, 'aiModel', providerInfo.models[0].id);
+            updateSettings(guildId, 'aiProvider', interaction.values[0]);
+            updateSettings(guildId, 'aiModel', p.models[0].id);
         }
         else if (interaction.customId === 'select_ai_model') {
             updateSettings(guildId, 'aiModel', interaction.values[0]);
         }
         else if (interaction.customId === 'select_tts_provider') {
-            const provider = interaction.values[0];
-            const providerInfo = TTS_PROVIDERS[provider];
-            
-            if (providerInfo.requiresKey && !process.env[providerInfo.keyEnv]) {
-                return interaction.reply({ content: `❌ ${providerInfo.name} membutuhkan API Key!`, ephemeral: true });
+            const p = TTS_PROVIDERS[interaction.values[0]];
+            if (p.requiresKey && !process.env[p.keyEnv]) {
+                return interaction.reply({ content: '❌ No API Key!', ephemeral: true });
             }
-            
-            updateSettings(guildId, 'ttsProvider', provider);
-            updateSettings(guildId, 'ttsVoice', providerInfo.voices[0].id);
+            updateSettings(guildId, 'ttsProvider', interaction.values[0]);
+            updateSettings(guildId, 'ttsVoice', p.voices[0].id);
         }
         else if (interaction.customId === 'select_tts_voice') {
             updateSettings(guildId, 'ttsVoice', interaction.values[0]);
@@ -1305,11 +816,7 @@ client.on('interactionCreate', async (interaction) => {
         else if (interaction.customId === 'mode_voice') {
             updateSettings(guildId, 'mode', 'voice');
         }
-        else if (interaction.customId === 'refresh_settings') {
-            // Just refresh
-        }
         
-        // Refresh settings display
         const components = [
             createAIProviderMenu(guildId),
             createAIModelMenu(guildId),
@@ -1318,84 +825,54 @@ client.on('interactionCreate', async (interaction) => {
             createModeButtons(guildId)
         ].filter(Boolean);
         
-        await interaction.update({
-            embeds: [createSettingsEmbed(guildId)],
-            components: components
-        });
-        
-    } catch (error) {
-        console.error('Interaction error:', error);
-        await interaction.reply({ content: '❌ Error!', ephemeral: true }).catch(() => {});
-    }
+        await interaction.update({ embeds: [createSettingsEmbed(guildId)], components });
+    } catch (e) { console.error(e); }
 });
 
 // ==================== MESSAGE HANDLER ====================
 client.on('messageCreate', async (message) => {
-    if (message.author.bot) return;
-    if (!message.content.startsWith(CONFIG.prefix)) return;
+    if (message.author.bot || !message.content.startsWith(CONFIG.prefix)) return;
     
     const args = message.content.slice(CONFIG.prefix.length).trim().split(/ +/);
-    const command = args.shift().toLowerCase();
+    const cmd = args.shift().toLowerCase();
     
     try {
-        await handleCommand(message, command, args);
-    } catch (error) {
-        console.error('Command error:', error);
-        await message.reply('❌ Terjadi error!');
-    }
+        switch (cmd) {
+            case 'ask': case 'a': await handleAsk(message, args.join(' ')); break;
+            case 'settings': case 'config': 
+                if (!isAdmin(message.author.id)) return message.reply('❌ Admin only!');
+                await showSettings(message); break;
+            case 'join': await joinVoice(message); break;
+            case 'leave': case 'dc': await leaveVoice(message); break;
+            case 'status': await showStatus(message); break;
+            case 'providers': await showStatus(message); break;
+            case 'help': case 'h': await showHelp(message); break;
+            case 'clear':
+                conversations.delete(`${message.guild.id}-${message.author.id}`);
+                await message.reply('🗑️ History cleared!'); break;
+        }
+    } catch (e) { console.error(e); }
 });
 
 // ==================== BOT READY ====================
 client.once('ready', () => {
-    console.log('');
-    console.log('╔════════════════════════════════════════════╗');
-    console.log('║        🤖 DISCORD AI BOT v2.2 🤖           ║');
-    console.log('╠════════════════════════════════════════════╣');
-    console.log(`║  Bot: ${client.user.tag.padEnd(35)}║`);
-    console.log(`║  Servers: ${String(client.guilds.cache.size).padEnd(32)}║`);
-    console.log(`║  Prefix: ${CONFIG.prefix.padEnd(33)}║`);
-    console.log(`║  Admins: ${String(CONFIG.adminIds.length).padEnd(33)}║`);
-    console.log('╚════════════════════════════════════════════╝');
-    console.log('');
+    console.log(`\n🤖 ${client.user.tag} | ${client.guilds.cache.size} servers\n`);
     
-    // Show available providers
-    console.log('📋 AI Providers:');
-    Object.entries(AI_PROVIDERS).forEach(([key, p]) => {
-        const status = p.requiresKey ? (process.env[p.keyEnv] ? '🟢' : '🔴') : '🟢';
-        console.log(`   ${status} ${p.name} (${p.models.length} models)`);
+    Object.entries(AI_PROVIDERS).forEach(([k, p]) => {
+        const ok = !p.requiresKey || process.env[p.keyEnv];
+        console.log(`${ok ? '🟢' : '🔴'} ${p.name} (${p.models.length} models)`);
     });
     
-    console.log('');
-    console.log('🔊 TTS Providers:');
-    Object.entries(TTS_PROVIDERS).forEach(([key, p]) => {
-        const status = p.requiresKey ? (process.env[p.keyEnv] ? '🟢' : '🔴') : '🟢';
-        console.log(`   ${status} ${p.name} (${p.voices.length} voices)`);
-    });
-    console.log('');
-    
-    client.user.setActivity(`${CONFIG.prefix}help | AI Bot v2.2`, { type: ActivityType.Listening });
+    client.user.setActivity(`${CONFIG.prefix}help`, { type: ActivityType.Listening });
     loadSettings();
 });
 
-// ==================== HEALTH CHECK SERVER ====================
-const server = createServer((req, res) => {
-    res.writeHead(200, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({
-        status: 'online',
-        bot: client.user?.tag,
-        version: '2.2',
-        guilds: client.guilds?.cache.size,
-        uptime: process.uptime()
-    }));
-});
+// ==================== HEALTH CHECK ====================
+createServer((req, res) => {
+    res.writeHead(200);
+    res.end(JSON.stringify({ status: 'ok', bot: client.user?.tag, version: '2.3' }));
+}).listen(process.env.PORT || 3000, () => console.log('🌐 Health check ready'));
 
-const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => console.log(`🌐 Health check on port ${PORT}`));
-
-// ==================== START BOT ====================
-if (!CONFIG.token) {
-    console.error('❌ DISCORD_TOKEN tidak ditemukan!');
-    process.exit(1);
-}
-
+// ==================== START ====================
+if (!CONFIG.token) { console.error('❌ No DISCORD_TOKEN!'); process.exit(1); }
 client.login(CONFIG.token);
