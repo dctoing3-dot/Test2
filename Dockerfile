@@ -23,8 +23,8 @@ WORKDIR /app
 # Copy package files
 COPY package*.json ./
 
-# Install Node.js dependencies
-RUN npm ci --only=production
+# Install Node.js dependencies (UBAH INI)
+RUN npm install --omit=dev
 
 # Copy source code
 COPY . .
