@@ -1,7 +1,7 @@
 {
   "name": "discord-ai-bot",
-  "version": "2.9.0",
-  "description": "Discord AI Bot with Multi-Provider Support & Long TTS",
+  "version": "2.11.0",
+  "description": "Discord AI Bot - Tavily + Serper Search, Gemini AI, Natural TTS",
   "main": "src/index.js",
   "scripts": {
     "start": "node src/index.js",
@@ -18,5 +18,17 @@
   },
   "engines": {
     "node": ">=18.0.0"
-  }
+  },
+  "keywords": [
+    "discord",
+    "bot",
+    "ai",
+    "gemini",
+    "tavily",
+    "serper",
+    "tts",
+    "voice"
+  ],
+  "author": "",
+  "license": "MIT"
 }
