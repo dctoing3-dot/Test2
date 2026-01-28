@@ -1,50 +1,54 @@
-FROM node:20-slim
+FROM node:20-alpine AS builder
 
-# Install system dependencies
-RUN apt-get update && apt-get install -y \
+# Install build dependencies
+RUN apk add --no-cache python3 make g++
+
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci --only=production && npm cache clean --force
+
+# ============================================
+FROM node:20-alpine
+
+# Install runtime dependencies only
+RUN apk add --no-cache \
     python3 \
-    python3-pip \
-    python3-venv \
+    py3-pip \
     ffmpeg \
-    libopus0 \
-    libopus-dev \
-    libsodium23 \
-    libsodium-dev \
-    opus-tools \
+    opus \
+    libsodium \
     curl \
-    ca-certificates \
-    && pip3 install --break-system-packages edge-tts \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* \
-    && rm -rf /root/.cache
+    && pip3 install --no-cache-dir --break-system-packages edge-tts \
+    && rm -rf /root/.cache /tmp/*
 
-# Set working directory
+# Create non-root user
+RUN addgroup -g 1001 botgroup && \
+    adduser -D -u 1001 -G botgroup botuser
+
 WORKDIR /app
 
-# Copy package files first (better caching)
-COPY package*.json ./
+# Copy dependencies from builder
+COPY --from=builder /app/node_modules ./node_modules
 
-# Install Node.js dependencies
-RUN npm install --omit=dev \
-    && npm cache clean --force
+# Copy source
+COPY --chown=botuser:botgroup . .
 
-# Copy source code
-COPY . .
+# Create directories with proper permissions
+RUN mkdir -p temp data logs && \
+    chown -R botuser:botgroup temp data logs && \
+    chmod 755 temp data logs
 
-# Create required directories
-RUN mkdir -p temp data logs src \
-    && chmod 777 temp data logs
+# Switch to non-root user
+USER botuser
 
 # Environment
 ENV NODE_ENV=production
 ENV NODE_OPTIONS="--max-old-space-size=512"
 
 # Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
+HEALTHCHECK --interval=30s --timeout=10s --start-period=15s --retries=3 \
     CMD curl -f http://localhost:3000/ || exit 1
 
-# Expose port
 EXPOSE 3000
 
-# Start command
-CMD ["npm", "start"]
+CMD ["node", "src/index.js"]
