@@ -1,7 +1,7 @@
 // ============================================================
-//         DYNAMIC API & MODEL MANAGER v2.1
+//         DYNAMIC API & MODEL MANAGER v2.2
 //         Full Embed UI + Multi Provider Sync
-//         Fixed: All issues from analysis
+//         Fixed: Pollinations Free + API + Full Models
 // ============================================================
 
 const Redis = require('ioredis');
@@ -68,12 +68,15 @@ class DynamicManager {
                 icon: '🔵',
                 keyPrefix: 'AIza',
                 syncable: true,
+                requiresKey: true,
                 defaultModels: [
                     { id: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash' },
                     { id: 'gemini-2.5-pro', name: 'Gemini 2.5 Pro' },
+                    { id: 'gemini-2.5-flash-lite', name: 'Gemini 2.5 Flash Lite' },
                     { id: 'gemini-2.0-flash', name: 'Gemini 2.0 Flash' },
                     { id: 'gemini-2.0-flash-lite', name: 'Gemini 2.0 Flash Lite' },
                     { id: 'gemini-1.5-flash', name: 'Gemini 1.5 Flash' },
+                    { id: 'gemini-1.5-flash-8b', name: 'Gemini 1.5 Flash 8B' },
                     { id: 'gemini-1.5-pro', name: 'Gemini 1.5 Pro' }
                 ]
             },
@@ -82,12 +85,17 @@ class DynamicManager {
                 icon: '🟠',
                 keyPrefix: 'gsk_',
                 syncable: true,
+                requiresKey: true,
                 defaultModels: [
-                    { id: 'llama-3.3-70b-versatile', name: 'Llama 3.3 70B' },
-                    { id: 'llama-3.1-8b-instant', name: 'Llama 3.1 8B' },
-                    { id: 'llama-3.1-70b-versatile', name: 'Llama 3.1 70B' },
+                    { id: 'llama-3.3-70b-versatile', name: 'Llama 3.3 70B Versatile' },
+                    { id: 'llama-3.1-8b-instant', name: 'Llama 3.1 8B Instant' },
+                    { id: 'llama-3.1-70b-versatile', name: 'Llama 3.1 70B Versatile' },
+                    { id: 'llama-3.2-1b-preview', name: 'Llama 3.2 1B Preview' },
+                    { id: 'llama-3.2-3b-preview', name: 'Llama 3.2 3B Preview' },
                     { id: 'mixtral-8x7b-32768', name: 'Mixtral 8x7B' },
-                    { id: 'gemma2-9b-it', name: 'Gemma 2 9B' }
+                    { id: 'gemma2-9b-it', name: 'Gemma 2 9B' },
+                    { id: 'whisper-large-v3', name: 'Whisper Large V3' },
+                    { id: 'whisper-large-v3-turbo', name: 'Whisper V3 Turbo' }
                 ]
             },
             openrouter: {
@@ -95,35 +103,125 @@ class DynamicManager {
                 icon: '🟣',
                 keyPrefix: 'sk-or-',
                 syncable: true,
+                requiresKey: true,
                 defaultModels: [
                     { id: 'arcee-ai/trinity-large-preview:free', name: 'Trinity Large Preview (free)' },
                     { id: 'upstage/solar-pro-3:free', name: 'Solar Pro 3 (free)' },
+                    { id: 'liquid/lfm-2.5-1.2b-thinking:free', name: 'LFM2.5-1.2B-Thinking (free)' },
+                    { id: 'liquid/lfm-2.5-1.2b-instruct:free', name: 'LFM2.5-1.2B-Instruct (free)' },
+                    { id: 'allenai/molmo-2-8b:free', name: 'Molmo2 8B (free)' },
+                    { id: 'tngtech/deepseek-r1t-chimera:free', name: 'R1T Chimera (free)' },
+                    { id: 'tngtech/deepseek-r1t2-chimera:free', name: 'DeepSeek R1T2 Chimera (free)' },
+                    { id: 'z-ai/glm-4.5-air:free', name: 'GLM 4.5 Air (free)' },
+                    { id: 'cognitivecomputations/dolphin-mistral-24b-venice-edition:free', name: 'Uncensored (free)' },
+                    { id: 'google/gemma-3n-e2b-it:free', name: 'Gemma 3n 2B (free)' },
+                    { id: 'deepseek/deepseek-r1-0528:free', name: 'R1 0528 (free)' },
+                    { id: 'mistralai/mistral-small-3.1-24b-instruct:free', name: 'Mistral Small 3.1 24B (free)' },
                     { id: 'google/gemini-2.0-flash-exp:free', name: 'Gemini 2.0 Flash (free)' },
                     { id: 'meta-llama/llama-3.3-70b-instruct:free', name: 'Llama 3.3 70B (free)' },
-                    { id: 'deepseek/deepseek-r1-0528:free', name: 'DeepSeek R1 (free)' }
+                    { id: 'meta-llama/llama-3.1-405b-instruct:free', name: 'Llama 3.1 405B (free)' },
+                    { id: 'qwen/qwen3-coder:free', name: 'Qwen3 Coder (free)' },
+                    { id: 'moonshotai/kimi-k2:free', name: 'Kimi K2 (free)' },
+                    { id: 'openai/gpt-oss-120b:free', name: 'GPT OSS 120B (free)' },
+                    { id: 'nousresearch/hermes-3-llama-3.1-405b:free', name: 'Hermes 3 405B (free)' }
                 ]
             },
-            pollinations: {
-                name: 'Pollinations',
+            pollinations_free: {
+                name: 'Pollinations (Free)',
                 icon: '🌸',
                 keyPrefix: '',
                 syncable: true,
+                requiresKey: false,
                 defaultModels: [
+                    // Basic models only - no API key needed
                     { id: 'openai', name: 'OpenAI GPT' },
-                    { id: 'openai-large', name: 'OpenAI Large' },
                     { id: 'claude', name: 'Claude' },
-                    { id: 'claude-hybridspace', name: 'Claude Hybridspace' },
                     { id: 'gemini', name: 'Gemini' },
                     { id: 'deepseek', name: 'DeepSeek' },
                     { id: 'deepseek-r1', name: 'DeepSeek R1' },
-                    { id: 'deepseek-reasoner', name: 'DeepSeek Reasoner' },
                     { id: 'qwen', name: 'Qwen' },
-                    { id: 'qwen-coder', name: 'Qwen Coder' },
                     { id: 'llama', name: 'Llama' },
                     { id: 'mistral', name: 'Mistral' },
-                    { id: 'mistral-large', name: 'Mistral Large' },
+                    { id: 'unity', name: 'Unity' },
+                    { id: 'midijourney', name: 'Midijourney' },
+                    { id: 'rtist', name: 'Rtist' },
                     { id: 'searchgpt', name: 'SearchGPT' },
-                    { id: 'evil', name: 'Evil Mode' }
+                    { id: 'evil', name: 'Evil Mode (Uncensored)' },
+                    { id: 'p1', name: 'P1' }
+                ]
+            },
+            pollinations_api: {
+                name: 'Pollinations (API)',
+                icon: '🌺',
+                keyPrefix: '',
+                syncable: true,
+                requiresKey: true,
+                defaultModels: [
+                    // OpenAI Models
+                    { id: 'openai', name: 'OpenAI GPT' },
+                    { id: 'openai-fast', name: 'OpenAI Fast' },
+                    { id: 'openai-large', name: 'OpenAI Large' },
+                    { id: 'openai-reasoning', name: 'OpenAI Reasoning (o3-mini)' },
+                    { id: 'openai-audio', name: 'OpenAI Audio (GPT-4o-audio)' },
+                    // Claude Models
+                    { id: 'claude', name: 'Claude' },
+                    { id: 'claude-fast', name: 'Claude Fast' },
+                    { id: 'claude-large', name: 'Claude Large' },
+                    { id: 'claude-haiku', name: 'Claude Haiku' },
+                    { id: 'claude-sonnet', name: 'Claude Sonnet' },
+                    { id: 'claude-opus', name: 'Claude Opus' },
+                    { id: 'claude-hybridspace', name: 'Claude Hybridspace' },
+                    // Gemini Models
+                    { id: 'gemini', name: 'Gemini' },
+                    { id: 'gemini-fast', name: 'Gemini Fast' },
+                    { id: 'gemini-large', name: 'Gemini Large' },
+                    { id: 'gemini-search', name: 'Gemini Search' },
+                    { id: 'gemini-thinking', name: 'Gemini Thinking' },
+                    // DeepSeek Models
+                    { id: 'deepseek', name: 'DeepSeek' },
+                    { id: 'deepseek-v3', name: 'DeepSeek V3' },
+                    { id: 'deepseek-r1', name: 'DeepSeek R1' },
+                    { id: 'deepseek-reasoner', name: 'DeepSeek Reasoner' },
+                    // Qwen Models
+                    { id: 'qwen', name: 'Qwen' },
+                    { id: 'qwen-coder', name: 'Qwen Coder' },
+                    // Llama Models
+                    { id: 'llama', name: 'Llama' },
+                    { id: 'llamalight', name: 'Llama Light (70B)' },
+                    { id: 'llama-scaleway', name: 'Llama Scaleway' },
+                    // Mistral Models
+                    { id: 'mistral', name: 'Mistral' },
+                    { id: 'mistral-small', name: 'Mistral Small' },
+                    { id: 'mistral-large', name: 'Mistral Large' },
+                    // Grok Models
+                    { id: 'grok', name: 'Grok' },
+                    { id: 'grok-fast', name: 'Grok Fast' },
+                    // Kimi Models
+                    { id: 'kimi', name: 'Kimi' },
+                    { id: 'kimi-large', name: 'Kimi Large' },
+                    { id: 'kimi-reasoning', name: 'Kimi Reasoning' },
+                    // Other Models
+                    { id: 'glm', name: 'GLM' },
+                    { id: 'minimax', name: 'MiniMax' },
+                    { id: 'nova-fast', name: 'Amazon Nova Fast' },
+                    { id: 'phi', name: 'Microsoft Phi' },
+                    // Search/Tool Models
+                    { id: 'searchgpt', name: 'SearchGPT' },
+                    { id: 'perplexity-fast', name: 'Perplexity Fast' },
+                    { id: 'perplexity-reasoning', name: 'Perplexity Reasoning' },
+                    // Creative/Art Models
+                    { id: 'midijourney', name: 'Midijourney' },
+                    { id: 'unity', name: 'Unity' },
+                    { id: 'rtist', name: 'Rtist' },
+                    // Special Models
+                    { id: 'evil', name: 'Evil Mode (Uncensored)' },
+                    { id: 'p1', name: 'P1' },
+                    { id: 'hormoz', name: 'Hormoz' },
+                    { id: 'sur', name: 'Sur' },
+                    { id: 'bidara', name: 'Bidara' },
+                    // Education/Utility
+                    { id: 'chickytutor', name: 'ChickyTutor (Education)' },
+                    { id: 'nomnom', name: 'NomNom (Food)' }
                 ]
             },
             huggingface: {
@@ -131,10 +229,14 @@ class DynamicManager {
                 icon: '🟡',
                 keyPrefix: 'hf_',
                 syncable: true,
+                requiresKey: true,
                 defaultModels: [
                     { id: 'meta-llama/Llama-3.1-8B-Instruct', name: 'Llama 3.1 8B' },
                     { id: 'meta-llama/Llama-3.3-70B-Instruct', name: 'Llama 3.3 70B' },
-                    { id: 'mistralai/Mixtral-8x7B-Instruct-v0.1', name: 'Mixtral 8x7B' }
+                    { id: 'mistralai/Mixtral-8x7B-Instruct-v0.1', name: 'Mixtral 8x7B' },
+                    { id: 'Qwen/Qwen2.5-72B-Instruct', name: 'Qwen 2.5 72B' },
+                    { id: 'google/gemma-2-27b-it', name: 'Gemma 2 27B' },
+                    { id: 'HuggingFaceH4/zephyr-7b-beta', name: 'Zephyr 7B' }
                 ]
             },
             elevenlabs: {
@@ -142,6 +244,7 @@ class DynamicManager {
                 icon: '🎙️',
                 keyPrefix: '',
                 syncable: false,
+                requiresKey: true,
                 defaultModels: []
             },
             tavily: {
@@ -149,6 +252,7 @@ class DynamicManager {
                 icon: '🔍',
                 keyPrefix: 'tvly-',
                 syncable: false,
+                requiresKey: true,
                 defaultModels: []
             },
             serper: {
@@ -156,6 +260,7 @@ class DynamicManager {
                 icon: '🔎',
                 keyPrefix: '',
                 syncable: false,
+                requiresKey: true,
                 defaultModels: []
             }
         };
@@ -206,12 +311,10 @@ class DynamicManager {
             const keys = await this.getApiKeys(provider);
             const now = Date.now();
             
-            // Find active key
             for (const keyData of keys) {
                 if (keyData.status === 'active') {
                     return keyData.key;
                 }
-                // Check if cooldown expired
                 if (keyData.status === 'cooldown' && keyData.cooldownUntil && keyData.cooldownUntil < now) {
                     keyData.status = 'active';
                     await this.redisSet(`api:${provider}`, keys);
@@ -219,7 +322,6 @@ class DynamicManager {
                 }
             }
             
-            // Find standby key
             const standby = keys.find(k => k.status === 'standby');
             if (standby) {
                 standby.status = 'active';
@@ -227,7 +329,6 @@ class DynamicManager {
                 return standby.key;
             }
             
-            // Fallback to ENV
             return envFallback;
         } catch (e) {
             console.error('getActiveKey error:', e.message);
@@ -271,7 +372,6 @@ class DynamicManager {
             
             keys.splice(index, 1);
             
-            // Ensure at least one is active
             if (keys.length > 0 && !keys.some(k => k.status === 'active')) {
                 keys[0].status = 'active';
             }
@@ -298,11 +398,9 @@ class DynamicManager {
                 return false;
             }
             
-            // Set current key to cooldown
             keys[activeIdx].status = 'cooldown';
             keys[activeIdx].cooldownUntil = Date.now() + cooldownMs;
             
-            // Find next standby key
             for (let i = 1; i < keys.length; i++) {
                 const nextIdx = (activeIdx + i) % keys.length;
                 if (keys[nextIdx].status === 'standby') {
@@ -350,7 +448,6 @@ class DynamicManager {
                 return models;
             }
             
-            // Return default models
             const providerConfig = this.getProviders()[provider];
             return providerConfig?.defaultModels || [];
         } catch (e) {
@@ -396,12 +493,10 @@ class DynamicManager {
         
         if (!config) return { success: false, error: 'Provider tidak valid' };
         
-        // OpenRouter - fetch from API
         if (provider === 'openrouter') {
             return this.syncOpenRouterModels();
         }
         
-        // Others - use default models
         if (config.defaultModels?.length > 0) {
             await this.redisSet(`models:${provider}`, config.defaultModels);
             return { success: true, count: config.defaultModels.length };
@@ -466,8 +561,14 @@ class DynamicManager {
         
         for (const [key, config] of Object.entries(providers)) {
             const s = status[key] || { keys: 0, models: 0, active: 0 };
-            const keyIcon = s.keys > 0 ? (s.active > 0 ? '🟢' : '🟡') : '⚫';
-            apiList += `${config.icon} **${config.name}**: ${keyIcon} ${s.keys} keys\n`;
+            
+            // For providers that don't require key
+            if (!config.requiresKey) {
+                apiList += `${config.icon} **${config.name}**: 🟢 Free\n`;
+            } else {
+                const keyIcon = s.keys > 0 ? (s.active > 0 ? '🟢' : '🟡') : '⚫';
+                apiList += `${config.icon} **${config.name}**: ${keyIcon} ${s.keys} keys\n`;
+            }
             
             if (s.models > 0) {
                 modelList += `${config.icon} ${config.name}: ${s.models}\n`;
@@ -483,7 +584,7 @@ class DynamicManager {
                 { name: '🤖 Models', value: modelList || '*Belum ada*', inline: true },
                 { name: '📊 Status', value: `Redis: ${this.connected ? '🟢 Connected' : '🔴 Offline (using ENV)'}`, inline: false }
             )
-            .setFooter({ text: 'v2.1 • Pilih menu di bawah' })
+            .setFooter({ text: 'v2.2 • Pollinations Free + API' })
             .setTimestamp();
     }
     
@@ -506,7 +607,12 @@ class DynamicManager {
     createProviderSelect(type) {
         const providers = this.getProviders();
         const options = Object.entries(providers)
-            .filter(([key, config]) => type === 'api' || config.syncable)
+            .filter(([key, config]) => {
+                if (type === 'api') {
+                    return config.requiresKey; // Only show providers that need API key
+                }
+                return config.syncable;
+            })
             .map(([key, config]) => ({
                 label: config.name,
                 value: key,
@@ -537,6 +643,14 @@ class DynamicManager {
                 .setDescription(`Provider "${provider}" tidak valid`);
         }
         
+        if (!config.requiresKey) {
+            return new EmbedBuilder()
+                .setColor(0x2ECC71)
+                .setTitle(`${config.icon} ${config.name}`)
+                .setDescription('✅ Provider ini **GRATIS** dan tidak memerlukan API key!')
+                .setTimestamp();
+        }
+        
         const keys = await this.getApiKeys(provider);
         
         let keyList = '';
@@ -562,6 +676,17 @@ class DynamicManager {
     }
     
     createApiKeyButtons(provider) {
+        const providers = this.getProviders();
+        const config = providers[provider];
+        
+        if (!config?.requiresKey) {
+            return [
+                new ActionRowBuilder().addComponents(
+                    new ButtonBuilder().setCustomId('dm_back_main').setLabel('⬅️ Kembali').setStyle(ButtonStyle.Secondary)
+                )
+            ];
+        }
+        
         return [
             new ActionRowBuilder().addComponents(
                 new ButtonBuilder().setCustomId(`dm_addkey_${provider}`).setLabel('➕ Tambah Key').setStyle(ButtonStyle.Success),
@@ -722,12 +847,10 @@ class DynamicManager {
         const customId = interaction.customId;
         
         try {
-            // Modal Submit
             if (interaction.isModalSubmit()) {
                 return this.handleModalSubmit(interaction);
             }
             
-            // Main Menu Select
             if (customId === 'dm_main_menu') {
                 const value = interaction.values[0];
                 
@@ -747,9 +870,9 @@ class DynamicManager {
                 }
                 else if (value === 'sync_all') {
                     await interaction.deferUpdate();
-                    const providers = ['openrouter', 'groq', 'gemini', 'pollinations', 'huggingface'];
+                    const syncProviders = ['openrouter', 'groq', 'gemini', 'pollinations_free', 'pollinations_api', 'huggingface'];
                     let results = [];
-                    for (const p of providers) {
+                    for (const p of syncProviders) {
                         const r = await this.syncModels(p);
                         results.push(`${p}: ${r.success ? `✅ ${r.count}` : `❌`}`);
                     }
@@ -770,7 +893,6 @@ class DynamicManager {
                 }
             }
             
-            // Provider Select for API
             else if (customId === 'dm_select_api') {
                 const provider = interaction.values[0];
                 await interaction.update({
@@ -780,7 +902,6 @@ class DynamicManager {
                 });
             }
             
-            // Provider Select for Models
             else if (customId === 'dm_select_model') {
                 const provider = interaction.values[0];
                 await interaction.update({
@@ -790,7 +911,6 @@ class DynamicManager {
                 });
             }
             
-            // Back Button
             else if (customId === 'dm_back_main') {
                 const status = await this.getPoolStatus();
                 await interaction.update({
@@ -800,21 +920,18 @@ class DynamicManager {
                 });
             }
             
-            // Add Key Button
             else if (customId.startsWith('dm_addkey_')) {
                 const provider = customId.replace('dm_addkey_', '');
                 const modal = this.createInputModal('addkey', provider, `Tambah API Key - ${provider}`);
                 await interaction.showModal(modal);
             }
             
-            // Remove Key Button
             else if (customId.startsWith('dm_removekey_')) {
                 const provider = customId.replace('dm_removekey_', '');
                 const modal = this.createInputModal('removekey', provider, `Hapus API Key - ${provider}`);
                 await interaction.showModal(modal);
             }
             
-            // Test Key Button
             else if (customId.startsWith('dm_testkey_')) {
                 const provider = customId.replace('dm_testkey_', '');
                 const key = await this.getActiveKey(provider);
@@ -824,21 +941,18 @@ class DynamicManager {
                 });
             }
             
-            // Add Model Button
             else if (customId.startsWith('dm_addmodel_')) {
                 const provider = customId.replace('dm_addmodel_', '');
                 const modal = this.createInputModal('addmodel', provider, `Tambah Model - ${provider}`);
                 await interaction.showModal(modal);
             }
             
-            // Remove Model Button
             else if (customId.startsWith('dm_removemodel_')) {
                 const provider = customId.replace('dm_removemodel_', '');
                 const modal = this.createInputModal('removemodel', provider, `Hapus Model - ${provider}`);
                 await interaction.showModal(modal);
             }
             
-            // Sync Button
             else if (customId.startsWith('dm_sync_')) {
                 const provider = customId.replace('dm_sync_', '');
                 await interaction.deferUpdate();
@@ -854,7 +968,6 @@ class DynamicManager {
                 });
             }
             
-            // Clear Models Button
             else if (customId.startsWith('dm_clearmodels_')) {
                 const provider = customId.replace('dm_clearmodels_', '');
                 await this.redisSet(`models:${provider}`, []);
@@ -881,7 +994,6 @@ class DynamicManager {
     
     async handleModalSubmit(interaction) {
         try {
-            // Validate format: dm_modal_addkey_gemini
             if (!interaction.customId || !interaction.customId.startsWith('dm_modal_')) {
                 return interaction.reply({ content: '❌ Invalid modal ID', ephemeral: true });
             }
@@ -891,10 +1003,9 @@ class DynamicManager {
                 return interaction.reply({ content: '❌ Malformed modal customId', ephemeral: true });
             }
             
-            const type = parts[2]; // 'addkey', 'removekey', 'addmodel', 'removemodel'
+            const type = parts[2];
             const provider = parts.slice(3).join('_');
             
-            // Validate provider
             if (!this.getProviders()[provider]) {
                 return interaction.reply({ content: `❌ Provider ${provider} tidak valid`, ephemeral: true });
             }
@@ -989,6 +1100,7 @@ class DynamicManager {
         for (const [p, s] of Object.entries(status)) {
             if (s.keys > 0) text += `• **${p}**: ${s.keys} keys (${s.active} active)\n`;
         }
+        text += '\n**🌸 Free Providers:**\n• pollinations_free: 🟢 No key needed';
         await msg.reply(text || 'Belum ada API keys');
     }
     
@@ -999,7 +1111,9 @@ class DynamicManager {
     
     async quickSyncModels(msg, provider) {
         if (!this.isAdmin(msg.author.id)) return msg.reply('❌ Admin only');
-        if (!provider) return msg.reply('❓ `.syncmodels <provider>`\nProviders: openrouter, groq, gemini, pollinations, huggingface');
+        if (!provider) {
+            return msg.reply('❓ `.syncmodels <provider>`\nProviders: openrouter, groq, gemini, pollinations_free, pollinations_api, huggingface');
+        }
         
         const status = await msg.reply('🔄 Syncing...');
         const result = await this.syncModels(provider.toLowerCase());
