@@ -9,6 +9,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc \
     build-essential \
     pkg-config \
+    git \
     ffmpeg \
     opus-tools \
     libopus0 \
@@ -29,8 +30,8 @@ WORKDIR /app
 # Copy package files
 COPY package*.json ./
 
-# Install Node dependencies with rebuild
-RUN npm install --omit=dev \
+# Install Node dependencies
+RUN npm install --omit=dev --legacy-peer-deps \
     && npm cache clean --force
 
 # Copy application code
@@ -43,7 +44,8 @@ RUN mkdir -p temp data logs \
 # Environment variables
 ENV NODE_ENV=production \
     NODE_OPTIONS="--max-old-space-size=512" \
-    FFMPEG_PATH=/usr/bin/ffmpeg
+    FFMPEG_PATH=/usr/bin/ffmpeg \
+    OPUS_LOCATION=/usr/lib/x86_64-linux-gnu/libopus.so.0
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=20s --retries=3 \
