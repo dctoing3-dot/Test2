@@ -72,21 +72,7 @@ const CONFIG = {
     token: process.env.DISCORD_TOKEN,
     prefix: '.',
     adminIds: (process.env.ADMIN_IDS || '').split(',').filter(Boolean),
-    // ... sisanya tetap sama
-};
-
-// ==================== VALIDATE TOKEN ====================
-if (!CONFIG.token) {
-    console.error('❌ FATAL: DISCORD_TOKEN is not set!');
-    process.exit(1);
-}
-if (CONFIG.token.length < 50) {
-    console.error('❌ FATAL: DISCORD_TOKEN appears invalid (too short)');
-    process.exit(1);
-}
-console.log('🔑 Token found:', CONFIG.token.slice(0, 10) + '...' + CONFIG.token.slice(-5));
     tempPath: './temp',
-    // API Keys (ENV Fallback)
     tavilyApiKey: process.env.TAVILY_API_KEY,
     serperApiKey: process.env.SERPER_API_KEY,
     geminiApiKey: process.env.GEMINI_API_KEY,
@@ -94,16 +80,14 @@ console.log('🔑 Token found:', CONFIG.token.slice(0, 10) + '...' + CONFIG.toke
     openrouterApiKey: process.env.OPENROUTER_API_KEY,
     huggingfaceApiKey: process.env.HUGGINGFACE_API_KEY,
     pollinationsApiKey: process.env.POLLINATIONS_API_KEY,
-    // Settings
     maxConversationMessages: 100,
     maxConversationAge: 7200000,
     rateLimitWindow: 60000,
     rateLimitMax: 30,
     voiceInactivityTimeout: 300000,
-    maxFileSize: 10 * 1024 * 1024, // 10MB
-    maxImageSize: 5 * 1024 * 1024  // 5MB
-};
-
+    maxFileSize: 10 * 1024 * 1024,
+    maxImageSize: 5 * 1024 * 1024
+}; // Pastikan ada titik koma dan kurung tutup di sini
 // Initialize Dynamic Manager
 const manager = new DynamicManager(process.env.REDIS_URL, CONFIG.adminIds);
 
@@ -3184,3 +3168,4 @@ client.login(CONFIG.token).then(() => {
 });
 
     
+
