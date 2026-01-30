@@ -69,7 +69,6 @@ healthServer.listen(process.env.PORT || 3000, () => console.log('🌐 Health ser
 // ==================== CONFIGURATION ====================
 
 const CONFIG = {
-    const CONFIG = {
     token: process.env.DISCORD_TOKEN,
     prefix: '.',
     adminIds: (process.env.ADMIN_IDS || '').split(',').filter(Boolean),
@@ -3183,4 +3182,5 @@ client.login(CONFIG.token).then(() => {
     if (err.message.includes('DISALLOWED_INTENTS')) console.error('Enable MESSAGE CONTENT INTENT di Developer Portal!');
     process.exit(1);
 });
+
     
