@@ -154,12 +154,15 @@ function shouldAutoFetch(url) {
     const autoFetchDomains = [
         'github.com', 'stackoverflow.com', 'medium.com', 'dev.to',
         'docs.google.com', 'ai.google.dev', 'openai.com',
-        'discord.js.org', 'npmjs.com', 'wikipedia.org'
+        'discord.js.org', 'npmjs.com', 'wikipedia.org',
+        'youtube.com', 'youtu.be'
     ];
     return autoFetchDomains.some(d => domain.includes(d));
 }
 
 function isMediaFile(url) {
+    // Jangan block YouTube URLs
+    if (url.includes('youtube.com') || url.includes('youtu.be')) return false;
     return /\.(jpg|jpeg|png|gif|mp4|mp3|avi|mov|zip|rar)$/i.test(url);
 }
 
@@ -2551,14 +2554,137 @@ async function readStackOverflow(url) {
     };
 }
 
+async function readYouTube(url) {
+    // Extract video ID
+    let videoId = null;
+    const patterns = [
+        /youtu\.be\/([^?&]+)/,
+        /youtube\.com\/watch\?v=([^&]+)/,
+        /youtube\.com\/embed\/([^?&]+)/,
+        /youtube\.com\/v\/([^?&]+)/,
+        /youtube\.com\/shorts\/([^?&]+)/
+    ];
+    
+    for (const pattern of patterns) {
+        const match = url.match(pattern);
+        if (match) {
+            videoId = match[1];
+            break;
+        }
+    }
+    
+    if (!videoId) throw new Error('Invalid YouTube URL');
+    
+    let output = '';
+    let title = '';
+    let description = '';
+    let channel = '';
+    
+    // Method 1: oEmbed API (gratis, tanpa key)
+    try {
+        const oembedUrl = `https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}&format=json`;
+        const oembedRes = await fetch(oembedUrl, { timeout: 10000 });
+        if (oembedRes.ok) {
+            const oembed = await oembedRes.json();
+            title = oembed.title || '';
+            channel = oembed.author_name || '';
+        }
+    } catch (e) {}
+    
+    // Method 2: Scrape halaman YouTube untuk deskripsi
+    try {
+        const pageRes = await fetch(`https://www.youtube.com/watch?v=${videoId}`, {
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36',
+                'Accept-Language': 'en-US,en;q=0.9',
+                'Accept': 'text/html,application/xhtml+xml'
+            },
+            timeout: 15000
+        });
+        
+        if (pageRes.ok) {
+            const html = await pageRes.text();
+            
+            // Extract title from meta
+            const titleMatch = html.match(/<meta name="title" content="([^"]+)"/) ||
+                              html.match(/<title>([^<]+)<\/title>/);
+            if (titleMatch && !title) title = titleMatch[1].replace(' - YouTube', '');
+            
+            // Extract description from meta
+            const descMatch = html.match(/<meta name="description" content="([^"]+)"/) ||
+                             html.match(/"shortDescription":"([^"]+)"/);
+            if (descMatch) description = descMatch[1].replace(/\\n/g, '\n');
+            
+            // Extract channel name
+            const channelMatch = html.match(/"ownerChannelName":"([^"]+)"/) ||
+                                html.match(/<link itemprop="name" content="([^"]+)">/);
+            if (channelMatch && !channel) channel = channelMatch[1];
+            
+            // Extract view count
+            const viewMatch = html.match(/"viewCount":"(\d+)"/) ||
+                             html.match(/"views":"([^"]+)"/);
+            const views = viewMatch ? parseInt(viewMatch[1]).toLocaleString('id-ID') : null;
+            
+            // Extract publish date
+            const dateMatch = html.match(/"publishDate":"([^"]+)"/) ||
+                             html.match(/"uploadDate":"([^"]+)"/);
+            const publishDate = dateMatch ? new Date(dateMatch[1]).toLocaleDateString('id-ID') : null;
+            
+            // Extract duration
+            const durationMatch = html.match(/"lengthSeconds":"(\d+)"/);
+            let duration = null;
+            if (durationMatch) {
+                const secs = parseInt(durationMatch[1]);
+                const mins = Math.floor(secs / 60);
+                const remainSecs = secs % 60;
+                duration = `${mins}:${remainSecs.toString().padStart(2, '0')}`;
+            }
+            
+            // Extract keywords/tags
+            const keywordsMatch = html.match(/<meta name="keywords" content="([^"]+)"/);
+            const keywords = keywordsMatch ? keywordsMatch[1] : null;
+            
+            // Build output
+            output = `🎬 **${title}**\n\n`;
+            output += `📺 **Channel:** ${channel}\n`;
+            if (views) output += `👁️ **Views:** ${views}\n`;
+            if (duration) output += `⏱️ **Duration:** ${duration}\n`;
+            if (publishDate) output += `📅 **Published:** ${publishDate}\n`;
+            output += `\n📝 **Description:**\n${description.slice(0, 2000)}\n`;
+            if (keywords) output += `\n🏷️ **Tags:** ${keywords.slice(0, 500)}`;
+        }
+    } catch (e) {
+        console.error('YouTube scrape error:', e.message);
+    }
+    
+    // Fallback jika gagal
+    if (!output) {
+        output = `🎬 **YouTube Video**\n\nVideo ID: ${videoId}\nURL: https://youtube.com/watch?v=${videoId}\n\n⚠️ Tidak dapat mengambil detail video.`;
+    }
+    
+    return {
+        type: 'youtube',
+        videoId: videoId,
+        title: title,
+        channel: channel,
+        content: output
+    };
+}
+
 async function readURL(url) {
     const domain = new URL(url).hostname;
     
-    // Special handlers for known sites
+    // YouTube
+    if (domain.includes('youtube.com') || domain.includes('youtu.be')) {
+        return await readYouTube(url);
+    }
+    
+    // GitHub
     if (domain.includes('github.com')) {
         return await readGitHubContent(url);
     }
     
+    // StackOverflow
     if (domain.includes('stackoverflow.com') || domain.includes('stackexchange.com')) {
         return await readStackOverflow(url);
     }
