@@ -836,9 +836,8 @@ const EDGE_TTS_VOICES = [
 
 // ElevenLabs Voices (PREMIUM - hanya admin)
 const ELEVENLABS_VOICES = [
-    // ===== YOUR SELECTED VOICE =====
-    { id: 'gmnazjXOFoOcWA59sd5m', name: '🎙️ Default Voice', lang: 'multi' },
-    
+        // ===== YOUR SELECTED VOICE =====
+    { id: '21m00Tcm4TlvDq8ikWAM', name: '🎙️ Default (Rachel)', lang: 'en' },
     // ===== ELEVENLABS PREMADE =====
     { id: 'EXAVITQu4vr4xnSDxMaL', name: '🇺🇸 Bella (Female)', lang: 'en' },
     { id: 'ErXwobaYiN019PkySvjV', name: '🇺🇸 Antoni (Male)', lang: 'en' },
@@ -3951,3 +3950,4 @@ client.login(CONFIG.token).then(() => {
     if (err.message.includes('DISALLOWED_INTENTS')) console.error('Enable MESSAGE CONTENT INTENT di Developer Portal!');
     process.exit(1);
 });
+
