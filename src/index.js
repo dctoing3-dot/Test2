@@ -36,6 +36,7 @@ const cheerio = require('cheerio');
 const fetch = require('node-fetch');
 const FormData = require('form-data');
 const { EndBehaviorType } = require('@discordjs/voice');
+const prism = require('prism-media');
 const pdfParse = require('pdf-parse');
 const mammoth = require('mammoth');
 const xlsx = require('xlsx');
@@ -1582,14 +1583,21 @@ function startRecording(connection, userId, guildId, textChannel) {
     
     const receiver = connection.receiver;
     
-        const audioStream = receiver.subscribe(userId, {
+    console.log(`🎙️ Started recording user ${userId}`);
+    
+    const opusStream = receiver.subscribe(userId, {
         end: {
             behavior: EndBehaviorType.AfterSilence,
-            duration: 2000  // 2 detik silence
+            duration: 2000
         }
     });
     
-    console.log(`🎙️ Started recording user ${userId}`);
+    // Decode Opus ke PCM menggunakan prism-media
+    const opusDecoder = new prism.opus.Decoder({
+        frameSize: 960,
+        channels: 2,
+        rate: 48000
+    });
     
     const chunks = [];
     const startTime = Date.now();
@@ -1597,37 +1605,51 @@ function startRecording(connection, userId, guildId, textChannel) {
     const recordingData = {
         chunks,
         startTime,
-        stream: audioStream,
+        stream: opusStream,
+        decoder: opusDecoder,
         timeout: null
     };
     
     voiceRecordings.set(userId, recordingData);
     
-    audioStream.on('data', (chunk) => {
+    // Pipe opus stream through decoder
+    opusStream.pipe(opusDecoder);
+    
+    opusDecoder.on('data', (chunk) => {
         if (Date.now() - startTime < CONFIG.voiceAI.maxRecordingDuration) {
             chunks.push(chunk);
         }
     });
     
-    audioStream.on('end', async () => {
+    opusDecoder.on('end', async () => {
         voiceRecordings.delete(userId);
         
         const duration = Date.now() - startTime;
         if (duration < CONFIG.voiceAI.minAudioLength || chunks.length === 0) {
+            console.log(`⏭️ Recording too short: ${duration}ms, chunks: ${chunks.length}`);
             return;
         }
         
-        await processVoiceInput(userId, guildId, Buffer.concat(chunks), textChannel);
+        const pcmBuffer = Buffer.concat(chunks);
+        console.log(`📊 PCM Buffer: ${pcmBuffer.length} bytes, duration: ${duration}ms`);
+        
+        await processVoiceInput(userId, guildId, pcmBuffer, textChannel);
     });
     
-    audioStream.on('error', (err) => {
+    opusDecoder.on('error', (err) => {
+        console.error('Opus decoder error:', err.message);
+        voiceRecordings.delete(userId);
+    });
+    
+    opusStream.on('error', (err) => {
         console.error('Audio stream error:', err.message);
         voiceRecordings.delete(userId);
     });
     
     recordingData.timeout = setTimeout(() => {
         if (voiceRecordings.has(userId)) {
-            audioStream.destroy();
+            console.log(`⏱️ Recording timeout for user ${userId}`);
+            opusStream.destroy();
             voiceRecordings.delete(userId);
         }
     }, CONFIG.voiceAI.maxRecordingDuration + 1000);
@@ -1717,56 +1739,64 @@ async function processVoiceInput(userId, guildId, audioBuffer, textChannel) {
 
 async function convertOpusToOgg(opusBuffer, outputPath) {
     return new Promise((resolve, reject) => {
-        const tempRaw = outputPath.replace('.ogg', '.raw');
-        
         try {
-            // Write raw opus data
-            fs.writeFileSync(tempRaw, opusBuffer);
-            
             console.log(`📁 Raw audio size: ${opusBuffer.length} bytes`);
             
-            // Convert using FFmpeg dengan format yang benar untuk Discord
-            const ffmpegCmd = `ffmpeg -y -f s16le -ar 48000 -ac 2 -i "${tempRaw}" -ar 16000 -ac 1 -c:a libopus -b:a 32k "${outputPath}"`;
+            // Buffer sudah dalam format PCM dari opus decoder
+            // Convert ke WAV untuk Whisper (16kHz mono)
             
-            exec(ffmpegCmd, { timeout: 15000 }, (error, stdout, stderr) => {
-                cleanupFile(tempRaw);
+            const tempPcm = outputPath.replace('.ogg', '.pcm');
+            fs.writeFileSync(tempPcm, opusBuffer);
+            
+            // Convert PCM ke WAV dengan FFmpeg
+            const ffmpegCmd = `ffmpeg -y -f s16le -ar 48000 -ac 2 -i "${tempPcm}" -ar 16000 -ac 1 -f wav "${outputPath}" 2>/dev/null`;
+            
+            exec(ffmpegCmd, { timeout: 15000 }, (error) => {
+                cleanupFile(tempPcm);
                 
-                if (error) {
-                    console.error('⚠️ FFmpeg error, trying alternative...');
+                if (error || !fs.existsSync(outputPath) || fs.statSync(outputPath).size < 1000) {
+                    // Fallback: create WAV with header manually
+                    console.log('⚠️ FFmpeg failed, creating WAV manually');
                     
-                    // Alternative: simpan sebagai WAV untuk Whisper
-                    const wavPath = outputPath.replace('.ogg', '.wav');
-                    const wavCmd = `ffmpeg -y -f s16le -ar 48000 -ac 2 -i "${tempRaw}" -ar 16000 -ac 1 "${wavPath}"`;
-                    
-                    fs.writeFileSync(tempRaw, opusBuffer);
-                    
-                    exec(wavCmd, { timeout: 15000 }, (err2) => {
-                        cleanupFile(tempRaw);
-                        
-                        if (err2) {
-                            // Last resort: save raw as ogg
-                            fs.writeFileSync(outputPath, opusBuffer);
-                        } else {
-                            // Rename wav to ogg path for consistency
-                            if (fs.existsSync(wavPath)) {
-                                fs.renameSync(wavPath, outputPath);
-                            }
-                        }
-                        resolve(outputPath);
-                    });
-                    return;
+                    const wavHeader = createWavHeader(opusBuffer.length, 48000, 2, 16);
+                    const wavFile = Buffer.concat([wavHeader, opusBuffer]);
+                    fs.writeFileSync(outputPath, wavFile);
                 }
                 
-                console.log(`✅ Audio converted: ${fs.statSync(outputPath).size} bytes`);
+                const finalSize = fs.existsSync(outputPath) ? fs.statSync(outputPath).size : 0;
+                console.log(`✅ Audio converted: ${finalSize} bytes`);
+                
                 resolve(outputPath);
             });
+            
         } catch (err) {
             console.error('❌ Conversion error:', err.message);
-            cleanupFile(tempRaw);
             fs.writeFileSync(outputPath, opusBuffer);
             resolve(outputPath);
         }
     });
+}
+
+function createWavHeader(dataLength, sampleRate, numChannels, bitsPerSample) {
+    const byteRate = sampleRate * numChannels * bitsPerSample / 8;
+    const blockAlign = numChannels * bitsPerSample / 8;
+    const buffer = Buffer.alloc(44);
+    
+    buffer.write('RIFF', 0);
+    buffer.writeUInt32LE(36 + dataLength, 4);
+    buffer.write('WAVE', 8);
+    buffer.write('fmt ', 12);
+    buffer.writeUInt32LE(16, 16);
+    buffer.writeUInt16LE(1, 20);
+    buffer.writeUInt16LE(numChannels, 22);
+    buffer.writeUInt32LE(sampleRate, 24);
+    buffer.writeUInt32LE(byteRate, 28);
+    buffer.writeUInt16LE(blockAlign, 32);
+    buffer.writeUInt16LE(bitsPerSample, 34);
+    buffer.write('data', 36);
+    buffer.writeUInt32LE(dataLength, 40);
+    
+    return buffer;
 }
 
 function enableVoiceAI(guildId, textChannel = null) {
