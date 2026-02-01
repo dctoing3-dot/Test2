@@ -1,13 +1,12 @@
 {
   "name": "toing-discord-bot",
   "version": "3.1.0",
-  "description": "Complete Discord AI Bot with Voice AI, Search, URL, File, and Image Analysis",
+  "description": "Discord AI Bot with Voice AI, ElevenLabs TTS, Search, File & Image",
   "main": "src/index.js",
   "scripts": {
     "start": "node src/index.js",
     "dev": "nodemon src/index.js",
-    "test": "echo \"No tests specified\" && exit 0",
-    "lint": "eslint src/",
+    "test": "echo \"No tests\" && exit 0",
     "clean": "rm -rf temp/* logs/*"
   },
   "keywords": [
@@ -15,10 +14,9 @@
     "bot",
     "ai",
     "voice",
-    "podcast",
-    "whisper",
+    "elevenlabs",
     "tts",
-    "gemini",
+    "whisper",
     "groq"
   ],
   "author": "",
@@ -40,7 +38,6 @@
     "xlsx": "^0.18.5"
   },
   "devDependencies": {
-    "eslint": "^8.56.0",
     "nodemon": "^3.0.2"
   },
   "engines": {
