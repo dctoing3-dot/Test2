@@ -90,11 +90,11 @@ const CONFIG = {
     maxFileSize: 10 * 1024 * 1024,
     maxImageSize: 5 * 1024 * 1024,    // ← KOMA DI SINI!
     // Voice AI Settings
-    voiceAI: {
+        voiceAI: {
         enabled: true,
         whisperModel: 'whisper-large-v3-turbo',
-        maxRecordingDuration: 15000,
-        silenceDuration: 1500,
+        maxRecordingDuration: 30000,
+        silenceDuration: 2000,
         minAudioLength: 500,
         supportedLanguages: ['id', 'en']
     }
@@ -1524,11 +1524,25 @@ async function transcribeWithGroq(audioFilePath) {
     const apiKey = CONFIG.groqApiKey;
     if (!apiKey) throw new Error('No Groq API key for transcription');
     
+    // Check file exists and size
+    if (!fs.existsSync(audioFilePath)) {
+        throw new Error('Audio file not found');
+    }
+    
+    const fileSize = fs.statSync(audioFilePath).size;
+    console.log(`📤 Sending to Whisper: ${audioFilePath} (${fileSize} bytes)`);
+    
+    if (fileSize < 1000) {
+        throw new Error('Audio file too small');
+    }
+    
     const formData = new FormData();
     formData.append('file', fs.createReadStream(audioFilePath));
     formData.append('model', CONFIG.voiceAI.whisperModel);
-    formData.append('language', 'id');
-    formData.append('response_format', 'json');
+    formData.append('response_format', 'verbose_json');
+    
+    // Jangan set language agar auto-detect
+    // formData.append('language', 'id');
     
     const response = await fetch('https://api.groq.com/openai/v1/audio/transcriptions', {
         method: 'POST',
@@ -1540,10 +1554,14 @@ async function transcribeWithGroq(audioFilePath) {
     
     if (!response.ok) {
         const error = await response.text();
-        throw new Error(`Whisper API error: ${response.status} - ${error}`);
+        console.error('❌ Whisper error:', error);
+        throw new Error(`Whisper API error: ${response.status}`);
     }
     
     const result = await response.json();
+    
+    console.log(`🗣️ Whisper result:`, JSON.stringify(result).slice(0, 200));
+    
     return result.text || '';
 }
 
@@ -1564,12 +1582,14 @@ function startRecording(connection, userId, guildId, textChannel) {
     
     const receiver = connection.receiver;
     
-    const audioStream = receiver.subscribe(userId, {
+        const audioStream = receiver.subscribe(userId, {
         end: {
             behavior: EndBehaviorType.AfterSilence,
-            duration: CONFIG.voiceAI.silenceDuration
+            duration: 2000  // 2 detik silence
         }
     });
+    
+    console.log(`🎙️ Started recording user ${userId}`);
     
     const chunks = [];
     const startTime = Date.now();
@@ -1697,25 +1717,52 @@ async function processVoiceInput(userId, guildId, audioBuffer, textChannel) {
 
 async function convertOpusToOgg(opusBuffer, outputPath) {
     return new Promise((resolve, reject) => {
-        const tempPcm = outputPath.replace('.ogg', '.pcm');
+        const tempRaw = outputPath.replace('.ogg', '.raw');
         
         try {
-            fs.writeFileSync(tempPcm, opusBuffer);
+            // Write raw opus data
+            fs.writeFileSync(tempRaw, opusBuffer);
             
-            exec(
-                `ffmpeg -y -f s16le -ar 48000 -ac 2 -i "${tempPcm}" -c:a libopus "${outputPath}"`,
-                { timeout: 10000 },
-                (error) => {
-                    cleanupFile(tempPcm);
+            console.log(`📁 Raw audio size: ${opusBuffer.length} bytes`);
+            
+            // Convert using FFmpeg dengan format yang benar untuk Discord
+            const ffmpegCmd = `ffmpeg -y -f s16le -ar 48000 -ac 2 -i "${tempRaw}" -ar 16000 -ac 1 -c:a libopus -b:a 32k "${outputPath}"`;
+            
+            exec(ffmpegCmd, { timeout: 15000 }, (error, stdout, stderr) => {
+                cleanupFile(tempRaw);
+                
+                if (error) {
+                    console.error('⚠️ FFmpeg error, trying alternative...');
                     
-                    if (error) {
-                        fs.writeFileSync(outputPath, opusBuffer);
-                    }
-                    resolve(outputPath);
+                    // Alternative: simpan sebagai WAV untuk Whisper
+                    const wavPath = outputPath.replace('.ogg', '.wav');
+                    const wavCmd = `ffmpeg -y -f s16le -ar 48000 -ac 2 -i "${tempRaw}" -ar 16000 -ac 1 "${wavPath}"`;
+                    
+                    fs.writeFileSync(tempRaw, opusBuffer);
+                    
+                    exec(wavCmd, { timeout: 15000 }, (err2) => {
+                        cleanupFile(tempRaw);
+                        
+                        if (err2) {
+                            // Last resort: save raw as ogg
+                            fs.writeFileSync(outputPath, opusBuffer);
+                        } else {
+                            // Rename wav to ogg path for consistency
+                            if (fs.existsSync(wavPath)) {
+                                fs.renameSync(wavPath, outputPath);
+                            }
+                        }
+                        resolve(outputPath);
+                    });
+                    return;
                 }
-            );
+                
+                console.log(`✅ Audio converted: ${fs.statSync(outputPath).size} bytes`);
+                resolve(outputPath);
+            });
         } catch (err) {
-            cleanupFile(tempPcm);
+            console.error('❌ Conversion error:', err.message);
+            cleanupFile(tempRaw);
             fs.writeFileSync(outputPath, opusBuffer);
             resolve(outputPath);
         }
