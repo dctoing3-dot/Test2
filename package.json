@@ -1,7 +1,7 @@
 {
   "name": "toing-discord-bot",
-  "version": "3.1.0",
-  "description": "Discord AI Bot with Voice AI, ElevenLabs TTS, Search, File & Image",
+  "version": "3.2.0",
+  "description": "Discord AI Bot with Voice AI, ScraperAPI Proxy, Multi-TTS",
   "main": "src/index.js",
   "scripts": {
     "start": "node src/index.js",
@@ -15,9 +15,8 @@
     "ai",
     "voice",
     "elevenlabs",
-    "tts",
-    "whisper",
-    "groq"
+    "proxy",
+    "tts"
   ],
   "author": "",
   "license": "MIT",
@@ -27,6 +26,7 @@
     "cheerio": "^1.0.0-rc.12",
     "discord.js": "^14.16.3",
     "form-data": "^4.0.0",
+    "https-proxy-agent": "^7.0.2",
     "ioredis": "^5.3.2",
     "libsodium-wrappers": "^0.7.13",
     "mammoth": "^1.6.0",
