@@ -93,7 +93,6 @@ const CONFIG = {
     voiceAI: {
         enabled: true,
         whisperModel: 'whisper-large-v3-turbo',
-        wakeWord: 'toing',
         maxRecordingDuration: 15000,
         silenceDuration: 1500,
         minAudioLength: 500,
@@ -1616,6 +1615,13 @@ function startRecording(connection, userId, guildId, textChannel) {
 
 async function processVoiceInput(userId, guildId, audioBuffer, textChannel) {
     if (processingUsers.has(userId)) return;
+    
+    // Prevent bot hearing itself
+    const session = voiceAISessions.get(guildId);
+    if (session?.isSpeaking) {
+        return;
+    }
+    
     processingUsers.add(userId);
     
     const tempFile = path.join(CONFIG.tempPath, `voice_${userId}_${Date.now()}.ogg`);
@@ -1630,33 +1636,39 @@ async function processVoiceInput(userId, guildId, audioBuffer, textChannel) {
         
         const transcription = await transcribeWithGroq(tempFile);
         
-        if (!transcription || transcription.trim().length < 2) {
+        if (!transcription || transcription.trim().length < 3) {
             return;
         }
         
         console.log(`🎤 [${userId}]: "${transcription}"`);
         
-        const wakeWord = CONFIG.voiceAI.wakeWord.toLowerCase();
-        const text = transcription.toLowerCase();
+        const text = transcription.toLowerCase().trim();
         
-        if (!text.includes(wakeWord)) {
+        // Skip noise/filler words only
+        const skipPhrases = [
+            'hmm', 'uhh', 'ehh', 'ahh', 'umm',
+            'hm', 'uh', 'eh', 'ah', 'um',
+            'terima kasih', 'thank you', 'thanks',
+            'oke', 'okay', 'ok'
+        ];
+        
+        if (skipPhrases.includes(text) || text.length < 5) {
+            console.log(`⏭️ Skipped filler: "${text}"`);
             return;
         }
         
-        const query = transcription.replace(new RegExp(wakeWord, 'gi'), '').trim();
-        
-        if (query.length < 2) {
-            const s = getSettings(guildId);
-            const ttsFile = await generateTTS('Ya, ada yang bisa kubantu?', s.ttsVoice);
-            await playTTSInVoice(guildId, ttsFile);
-            return;
-        }
-        
+        // Log ke text channel
         if (textChannel) {
             textChannel.send(`🎤 **Voice:** ${transcription}`).catch(() => {});
         }
         
-        const response = await callAI(guildId, userId, query, true);
+        // Mark bot as speaking
+        if (session) session.isSpeaking = true;
+        
+        // Call AI - langsung pakai transcription tanpa filter wake word
+        console.log(`🤖 Processing: "${transcription}"`);
+        const response = await callAI(guildId, userId, transcription, true);
+        console.log(`✅ AI responded (${response.latency}ms)`);
         
         if (textChannel) {
             const info = `*${response.model} • ${response.latency}ms* 🎙️`;
@@ -1667,11 +1679,19 @@ async function processVoiceInput(userId, guildId, audioBuffer, textChannel) {
         const ttsFile = await generateTTS(response.text, s.ttsVoice);
         await playTTSInVoice(guildId, ttsFile);
         
+        console.log(`✅ Voice response complete!`);
+        
     } catch (error) {
-        console.error('Voice processing error:', error.message);
+        console.error('❌ Voice error:', error.message);
     } finally {
         cleanupFile(tempFile);
         processingUsers.delete(userId);
+        
+        // Delay before listening again
+        setTimeout(() => {
+            const session = voiceAISessions.get(guildId);
+            if (session) session.isSpeaking = false;
+        }, 2000);
     }
 }
 
@@ -1706,7 +1726,8 @@ function enableVoiceAI(guildId, textChannel = null) {
     voiceAISessions.set(guildId, {
         enabled: true,
         textChannel: textChannel,
-        startedAt: Date.now()
+        startedAt: Date.now(),
+        isSpeaking: false  // ← TAMBAH INI
     });
     
     const conn = voiceConnections.get(guildId);
@@ -2175,10 +2196,10 @@ client.on(Events.MessageCreate, async (msg) => {
                     if (!jr.success) return msg.reply(`❌ ${jr.error}`);
                     
                     enableVoiceAI(msg.guild.id, msg.channel);
-                    await msg.reply(`🎙️ **Voice AI Activated!**\n\n` +
-                        `📍 Channel: **${jr.channel.name}**\n` +
-                        `🗣️ Wake word: **"${CONFIG.voiceAI.wakeWord}"**\n\n` +
-                        `Contoh: *"${CONFIG.voiceAI.wakeWord}, jelaskan apa itu AI"*`);
+                     await msg.reply(`🎙️ **Podcast Mode Activated!**\n\n` +
+                    `📍 Channel: **${jr.channel.name}**\n` +
+                    `🗣️ Mode: **Natural Conversation**\n\n` +
+                    `Langsung bicara saja, aku akan mendengar dan menjawab! 🎧`);
                         
                 } else if (voiceSubCmd === 'off' || voiceSubCmd === 'stop') {
                     disableVoiceAI(msg.guild.id);
