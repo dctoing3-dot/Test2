@@ -834,8 +834,6 @@ const ELEVENLABS_VOICES = [
     { id: 'de-DE-KatjaNeural', name: '🇩🇪 Katja (Female)', lang: 'de' },
 ];
 
-// ElevenLabs Voices (PREMIUM - hanya admin)
-const ELEVENLABS_VOICES = MINIMAX_VOICES;
 
 // Helper functions
 function getTTSVoices(provider) {
@@ -844,7 +842,7 @@ function getTTSVoices(provider) {
 
 function getDefaultVoice(provider) {
     return provider === 'elevenlabs' 
-        ? 'gmnazjXOFoOcWA59sd5m' 
+        ? 'id-ID-ArdiNeural'    // Pakai Edge-TTS voice
         : 'id-ID-GadisNeural';
 }
 
@@ -858,7 +856,7 @@ const DEFAULT_SETTINGS = {
     aiModel: 'llama-3.3-70b-versatile',
     ttsProvider: 'edge-tts',           // 'elevenlabs' atau 'edge-tts'
     ttsVoice: 'id-ID-ArdiNeural',     // Default untuk edge-tts
-    ttsVoiceElevenlabs: process.env.MINIMAX_VOICE_ID,
+    ttsVoiceElevenlabs: 'id-ID-ArdiNeural',
     searchEnabled: true,
     searchProvider: 'auto',
     geminiGrounding: true
