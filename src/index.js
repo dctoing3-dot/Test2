@@ -524,28 +524,44 @@ function parseThinkingResponse(text) {
     const answerMatch = answer.match(/\[ANSWER\]([\s\S]*?)\[\/ANSWER\]/i);
     if (answerMatch) {
         answer = answerMatch[1].trim();
-    } else {
-        // Jika tidak ada [ANSWER] tag, ambil setelah [/THINKING]
-        const afterThinking = answer.match(/\[\/THINKING\]([\s\S]*)/i);
-        if (afterThinking) {
-            answer = afterThinking[1].trim();
-        }
     }
     
-    // Bersihkan tag-tag yang tersisa
+    // Bersihkan semua tag dan placeholder
     answer = answer
+        // Remove thinking blocks
         .replace(/\[THINKING\][\s\S]*?\[\/THINKING\]/gi, '')
+        // Remove answer tags
         .replace(/\[ANSWER\]/gi, '')
         .replace(/\[\/ANSWER\]/gi, '')
-        .replace(/\[ANALYSIS TASK\][\s\S]*?(?=\[|\n\n)/gi, '')
-        .replace(/\[TASK\][\s\S]*?(?=\[|\n\n)/gi, '')
-        .replace(/\[REASONING PROCESS[\s\S]*?(?=\[SOURCE|\[ANSWER|\n\n\n)/gi, '')
-        .replace(/\[SOURCES[\s\S]*?(?=\[ANSWER|\[THINKING])/gi, '')
-        .replace(/\[USER REQUEST\][\s\S]*?(?=\[|\n\n)/gi, '')
+        // Remove placeholder text
+        .replace(/<reasoning process.*?>/gi, '')
+        .replace(/<jawaban.*?>/gi, '')
+        .replace(/<.*?step.*?>/gi, '')
+        // Remove instruction tags
+        .replace(/\[ANALYSIS TASK\][\s\S]*?(?=\n\n|\[)/gi, '')
+        .replace(/\[TASK\][\s\S]*?(?=\n\n|\[)/gi, '')
+        .replace(/\[REASONING PROCESS.*?\][\s\S]*?(?=\n\n\[|\[SOURCE)/gi, '')
+        .replace(/\[USER REQUEST\][\s\S]*?(?=\n\n|\[)/gi, '')
         .replace(/\[CURRENT DATE:.*?\]/gi, '')
+        .replace(/\[SOURCES.*?\][\s\S]*?(?=\n\n\n|\[ANSWER)/gi, '')
+        .replace(/\[ANALYSIS GUIDELINES\][\s\S]*/gi, '')
+        // Remove decorative lines
         .replace(/━+/g, '')
+        .replace(/─+/g, '')
+        // Clean whitespace
         .replace(/\n{3,}/g, '\n\n')
         .trim();
+    
+    // Jika answer kosong atau hanya placeholder, kembalikan text asli yang dibersihkan
+    if (!answer || answer.length < 50 || answer.includes('<') && answer.includes('>')) {
+        // Fallback: ambil semua text yang bukan dalam brackets
+        answer = text
+            .replace(/\[[\s\S]*?\]/g, '')
+            .replace(/<[\s\S]*?>/g, '')
+            .replace(/━+/g, '')
+            .replace(/\n{3,}/g, '\n\n')
+            .trim();
+    }
     
     return { thinking, answer };
 }
@@ -3744,25 +3760,10 @@ Lakukan analisis komprehensif dari semua sumber. Berikan rangkuman, insight, dan
 `;
         }
 
-        // Add reasoning instructions
-        analysisPrompt += `[REASONING PROCESS - WAJIB]
-Sebelum menjawab, lakukan reasoning berikut:
-
-1. IDENTIFIKASI: Apa topik utama dari masing-masing sumber?
-2. CROSS-REFERENCE: Apakah ada informasi yang konsisten/bertentangan antar sumber?
-3. CREDIBILITY: Seberapa kredibel masing-masing sumber? (official site > blog > social media)
-4. RECENCY: Informasi mana yang paling update?
-5. RELEVANCE: Sumber mana yang paling relevan dengan request user?
-6. SYNTHESIS: Bagaimana menggabungkan semua informasi menjadi jawaban terbaik?
-
-Format response:
-[THINKING]
-<reasoning process di sini - step by step>
-[/THINKING]
-
-[ANSWER]
-<jawaban final yang comprehensive>
-[/ANSWER]
+               // Add simple instructions
+        analysisPrompt += `[INSTRUKSI]
+Analisis konten di bawah, lalu berikan jawaban yang jelas dan terstruktur.
+Langsung jawab dalam Bahasa Indonesia tanpa menggunakan format khusus.
 
 `;
 
