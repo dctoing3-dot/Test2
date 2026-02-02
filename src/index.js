@@ -1037,10 +1037,13 @@ function httpRequest(options, body) {
 
 // --- FUNGSI BARU ---
 async function generatePuterTTS(text, options = {}) {
-    const apiUrl = CONFIG.puterTTS?.apiUrl || 'https://puter-tts-api.onrender.com';
+    let apiUrl = CONFIG.puterTTS?.apiUrl || 'https://puter-tts-api.onrender.com';
+    if (!apiUrl.startsWith('http')) apiUrl = `https://${apiUrl}`;
+    if (apiUrl.endsWith('/')) apiUrl = apiUrl.slice(0, -1);
+
     const voiceId = options.voiceId || CONFIG.puterTTS?.voiceId || 'gmnazjXOFoOcWA59sd5m';
     
-    console.log(`🎤 Puter.js TTS: Requesting...`);
+    console.log(`🎤 Puter.js TTS: Requesting to ${apiUrl}/tts`);
 
     try {
         const response = await fetch(`${apiUrl}/tts`, {
@@ -1048,7 +1051,8 @@ async function generatePuterTTS(text, options = {}) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 text: text.slice(0, 2500),
-                model: 'eleven_multilingual_v2'
+                model: 'eleven_multilingual_v2',
+                voice_id: voiceId
             }),
             timeout: 60000
         });
@@ -1058,8 +1062,16 @@ async function generatePuterTTS(text, options = {}) {
         
         if (!result.success || !result.audioUrl) throw new Error(result.error || 'No audio URL');
 
-        const audioRes = await fetch(result.audioUrl);
-        if (!audioRes.ok) throw new Error('Failed to download audio');
+        // === FIX URL HANDLING ===
+        let downloadUrl = result.audioUrl;
+        if (downloadUrl.startsWith('//')) {
+            downloadUrl = `https:${downloadUrl}`;
+        }
+        
+        console.log(`📥 Downloading: ${downloadUrl}`);
+
+        const audioRes = await fetch(downloadUrl);
+        if (!audioRes.ok) throw new Error('Failed to download audio file');
         
         const arrayBuffer = await audioRes.arrayBuffer();
         return Buffer.from(arrayBuffer);
@@ -1069,8 +1081,6 @@ async function generatePuterTTS(text, options = {}) {
         throw error;
     }
 }
-// -------------------
-
 // ==================== TTS FUNCTIONS ====================
 
 function cleanTextForTTS(text) {
