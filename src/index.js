@@ -1062,14 +1062,23 @@ async function generatePuterTTS(text, options = {}) {
         
         if (!result.success || !result.audioUrl) throw new Error(result.error || 'No audio URL');
 
-        // === FIX URL HANDLING ===
-        let downloadUrl = result.audioUrl;
+        const audioUrl = result.audioUrl;
+
+        // === HANDLE DATA URI (Base64) ===
+        if (audioUrl.startsWith('data:')) {
+            console.log('📥 Decoding Base64 Audio...');
+            // Format: data:audio/mpeg;base64,SUQzBA...
+            const base64Data = audioUrl.split(',')[1];
+            return Buffer.from(base64Data, 'base64');
+        }
+
+        // === HANDLE NORMAL URL ===
+        let downloadUrl = audioUrl;
         if (downloadUrl.startsWith('//')) {
             downloadUrl = `https:${downloadUrl}`;
         }
         
         console.log(`📥 Downloading: ${downloadUrl}`);
-
         const audioRes = await fetch(downloadUrl);
         if (!audioRes.ok) throw new Error('Failed to download audio file');
         
