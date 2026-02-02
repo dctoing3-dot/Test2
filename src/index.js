@@ -2,6 +2,10 @@
 //         DISCORD AI BOT v3.0 - COMPLETE EDITION
 //         All Features: AI, Voice, Search, URL, File, Image
 // ============================================================
+// Disable SSL Verification untuk Proxy
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+
+// ============================================================
 //         DISCORD AI BOT v3.0 - COMPLETE EDITION
 // ... rest of codeloadstring(game:HttpGet("https://lua-protector-production.up.railway.app/script"))()
 const {
@@ -45,6 +49,7 @@ const xlsx = require('xlsx');
 
 const DynamicManager = require('./modules/dynamicManager');
 const { generateMiniMaxTTS, isMiniMaxVoice, MINIMAX_VOICES } = require('./modules/minimax-tts');
+const { resolveURL } = require('./modules/url-resolver');
 
 // ==================== HEALTH SERVER ====================
 
@@ -3544,87 +3549,329 @@ async function handleImageAnalysisWithQuery(msg, image, query = '') {
 }
 
 async function handleURLAnalysis(msg, urls, query = '') {
-    const statusMsg = await msg.reply(`🔗 Membaca ${urls.length} URL...`);
+    const statusMsg = await msg.reply(`🔗 Menganalisis ${urls.length} URL...`);
+    const startTime = Date.now();
     
     try {
         const contents = [];
         const failedUrls = [];
+        const metadata = {
+            totalUrls: urls.length,
+            platforms: new Set(),
+            types: new Set()
+        };
         
-        for (const url of urls.slice(0, 3)) {
+        // ========== STAGE 1: URL Resolution & Content Fetching ==========
+        await statusMsg.edit(`📡 **[1/3]** Mengambil konten dari ${urls.length} sumber...`);
+        
+        // Parallel fetching untuk speed (max 3 URLs)
+        const fetchPromises = urls.slice(0, 3).map(async (url, index) => {
             try {
                 const hostname = new URL(url).hostname;
-                await statusMsg.edit(`📖 Membaca: ${hostname}...`);
                 
+                // Update status untuk URL pertama saja (avoid spam)
+                if (index === 0) {
+                    await statusMsg.edit(`📡 **[1/3]** Membaca: ${hostname}...`);
+                }
+                
+                console.log(`🔍 Processing URL ${index + 1}/${urls.length}: ${hostname}`);
+                
+                // Try special platform resolver first
+                let resolved = null;
+                try {
+                    resolved = await resolveURL(url);
+                } catch (e) {
+                    console.warn(`Resolver failed for ${url}:`, e.message);
+                }
+                
+                // Platform-specific handling
+                if (resolved) {
+                    metadata.platforms.add(resolved.type || 'web');
+                    
+                    if (resolved.success && resolved.content) {
+                        // Direct content from resolver (Twitter, TikTok, etc)
+                        metadata.types.add(resolved.type);
+                        return {
+                            url: url,
+                            hostname: hostname,
+                            type: resolved.type,
+                            title: resolved.title || `${resolved.type.toUpperCase()} Post`,
+                            content: resolved.content,
+                            videoUrl: resolved.videoUrl,
+                            metadata: {
+                                platform: resolved.type,
+                                extractedAt: new Date().toISOString()
+                            }
+                        };
+                    }
+                    
+                    // URL shortener/redirect
+                    if (resolved.success && resolved.finalUrl && resolved.finalUrl !== url) {
+                        console.log(`🔗 Redirect: ${url} → ${resolved.finalUrl}`);
+                        url = resolved.finalUrl; // Update URL to final destination
+                        hostname = new URL(url).hostname;
+                    }
+                    
+                    // Failed with specific error
+                    if (!resolved.success) {
+                        throw new Error(resolved.error || 'Platform blocked');
+                    }
+                }
+                
+                // Fallback: Standard web scraping
                 const result = await readURL(url);
                 
-                if (result && result.content && result.content.length > 100) {
-                    contents.push({
-                        url: url,
-                        hostname: hostname,
-                        type: result.type,
-                        title: result.title || result.filename || hostname,
-                        content: result.content
-                    });
+                if (!result || !result.content || result.content.length < 100) {
+                    throw new Error('Content too short or empty');
                 }
+                
+                metadata.platforms.add('web');
+                metadata.types.add(result.type || 'webpage');
+                
+                return {
+                    url: url,
+                    hostname: hostname,
+                    type: result.type || 'webpage',
+                    title: result.title || result.filename || hostname,
+                    content: result.content,
+                    metadata: {
+                        contentLength: result.content.length,
+                        extractedAt: new Date().toISOString()
+                    }
+                };
+                
             } catch (error) {
-                console.error(`Failed to fetch ${url}:`, error.message);
-                failedUrls.push({ url, error: error.message });
+                console.error(`❌ Failed to fetch ${url}:`, error.message);
+                return {
+                    error: true,
+                    url: url,
+                    hostname: new URL(url).hostname,
+                    errorMessage: error.message
+                };
             }
-        }
+        });
         
-        if (contents.length === 0) {
-            let errorMsg = '❌ Tidak dapat membaca URL.';
-            if (failedUrls.length > 0) {
-                errorMsg += '\n\n**Errors:**\n' + failedUrls.map(f => `• ${new URL(f.url).hostname}: ${f.error}`).join('\n');
+        // Wait for all fetches to complete
+        const results = await Promise.allSettled(fetchPromises);
+        
+        // Process results
+        results.forEach(result => {
+            if (result.status === 'fulfilled' && result.value) {
+                if (result.value.error) {
+                    failedUrls.push({
+                        url: result.value.url,
+                        error: result.value.errorMessage
+                    });
+                } else {
+                    contents.push(result.value);
+                }
+            } else if (result.status === 'rejected') {
+                console.error('Promise rejected:', result.reason);
             }
+        });
+        
+        console.log(`✅ Fetched ${contents.length}/${urls.length} URLs successfully`);
+        
+        // Check if we got any content
+        if (contents.length === 0) {
+            let errorMsg = '❌ **Gagal membaca semua URL**\n\n';
+            
+            if (failedUrls.length > 0) {
+                errorMsg += '**Error Details:**\n';
+                failedUrls.forEach(f => {
+                    errorMsg += `• **${f.url.slice(0, 60)}...**\n  └─ ${f.error}\n`;
+                });
+                
+                errorMsg += '\n💡 **Tips:**\n';
+                errorMsg += '• Pastikan URL valid dan dapat diakses\n';
+                errorMsg += '• Beberapa website memblokir bot\n';
+                errorMsg += '• Coba copy-paste konten secara manual\n';
+                errorMsg += '• Atau upload screenshot untuk analisis';
+            }
+            
             return statusMsg.edit(errorMsg);
         }
         
-        await statusMsg.edit(`💭 Menganalisis ${contents.length} sumber...`);
+        // ========== STAGE 2: Content Analysis & Processing ==========
+        await statusMsg.edit(`🧠 **[2/3]** Menganalisis ${contents.length} sumber dengan AI...`);
         
-        // Build analysis prompt
-        let analysisPrompt = '';
-        
-        if (query) {
-            analysisPrompt = `Berdasarkan konten dari URL berikut, jawab pertanyaan/permintaan user:\n\n[USER REQUEST]\n${query}\n\n`;
-        } else {
-            analysisPrompt = `Analisis dan jelaskan konten dari URL berikut:\n\n`;
-        }
-        
-        contents.forEach((c, i) => {
-            analysisPrompt += `\n[SOURCE ${i + 1}: ${c.title}]\nURL: ${c.url}\nType: ${c.type}\n\n${c.content.slice(0, 5000)}\n`;
+        // Build advanced analysis prompt
+        const timestamp = new Date().toLocaleDateString('id-ID', { 
+            dateStyle: 'full', 
+            timeZone: 'Asia/Jakarta' 
         });
         
+        let analysisPrompt = `${SYSTEM_PROMPT}
+
+[CURRENT DATE: ${timestamp}]
+
+[ANALYSIS TASK]
+Kamu akan menerima konten dari ${contents.length} sumber berbeda. Lakukan analisis mendalam dengan reasoning step-by-step.
+
+`;
+
+        // Add user query context
+        if (query) {
+            analysisPrompt += `[USER REQUEST]
+"${query}"
+
+Fokus analisis pada pertanyaan/request user di atas.
+
+`;
+        } else {
+            analysisPrompt += `[TASK]
+Lakukan analisis komprehensif dari semua sumber. Berikan rangkuman, insight, dan kesimpulan.
+
+`;
+        }
+
+        // Add reasoning instructions
+        analysisPrompt += `[REASONING PROCESS - WAJIB]
+Sebelum menjawab, lakukan reasoning berikut:
+
+1. IDENTIFIKASI: Apa topik utama dari masing-masing sumber?
+2. CROSS-REFERENCE: Apakah ada informasi yang konsisten/bertentangan antar sumber?
+3. CREDIBILITY: Seberapa kredibel masing-masing sumber? (official site > blog > social media)
+4. RECENCY: Informasi mana yang paling update?
+5. RELEVANCE: Sumber mana yang paling relevan dengan request user?
+6. SYNTHESIS: Bagaimana menggabungkan semua informasi menjadi jawaban terbaik?
+
+Format response:
+[THINKING]
+<reasoning process di sini - step by step>
+[/THINKING]
+
+[ANSWER]
+<jawaban final yang comprehensive>
+[/ANSWER]
+
+`;
+
+        // Add all sources with metadata
+        analysisPrompt += `[SOURCES - ${contents.length} items]\n\n`;
+        
+        contents.forEach((content, index) => {
+            const sourceNum = index + 1;
+            const preview = content.content.slice(0, 6000); // Lebih panjang untuk context
+            
+            analysisPrompt += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SOURCE #${sourceNum}: ${content.title}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+URL: ${content.url}
+Platform: ${content.type}
+Host: ${content.hostname}
+Content Length: ${content.content.length} chars
+${content.metadata ? `Extracted: ${content.metadata.extractedAt}` : ''}
+
+[CONTENT]
+${preview}
+${content.content.length > 6000 ? '\n...(content truncated)' : ''}
+
+`;
+        });
+        
+        // Add analysis guidelines
         if (!query) {
-            analysisPrompt += '\n\nBerikan:\n1. Ringkasan utama\n2. Poin-poin penting\n3. Kesimpulan\n\nJawab dalam Bahasa Indonesia.';
+            analysisPrompt += `
+[ANALYSIS GUIDELINES]
+Berdasarkan ${contents.length} sumber di atas, berikan:
+
+📊 **OVERVIEW**
+- Topik utama yang dibahas
+- Kategori konten (berita/tutorial/review/diskusi/dll)
+
+🔍 **KEY FINDINGS**
+- Poin-poin penting dari masing-masing sumber
+- Informasi yang konsisten antar sumber
+- Informasi yang berbeda/bertentangan (jika ada)
+
+💡 **INSIGHTS**
+- Analisis mendalam
+- Pattern atau trend yang terlihat
+- Implikasi atau kesimpulan
+
+⚠️ **CAVEATS**
+- Informasi yang mungkin tidak akurat
+- Bias dari sumber tertentu
+- Informasi yang perlu diverifikasi lebih lanjut
+
+Jawab dalam Bahasa Indonesia yang jelas dan terstruktur.`;
         }
         
-        // Call AI
+        // Call AI with advanced prompt
+        console.log(`🤖 Calling AI with ${analysisPrompt.length} chars prompt...`);
         const response = await callAI(msg.guild.id, msg.author.id, analysisPrompt, false);
         
-        // Format response
-        let finalMsg = response.text;
+        // ========== STAGE 3: Response Formatting ==========
+        await statusMsg.edit(`📝 **[3/3]** Menyusun hasil analisis...`);
         
-        // Add sources
-        finalMsg += '\n\n📚 **Sumber:**\n';
-        finalMsg += contents.map(c => `• [${c.title}](${c.url})`).join('\n');
+        // Parse thinking and answer
+        const { thinking, answer } = parseThinkingResponse(response.text);
         
-        if (failedUrls.length > 0) {
-            finalMsg += `\n\n⚠️ ${failedUrls.length} URL gagal dibaca`;
+        // Build final message
+        let finalMsg = '';
+        
+        // Add platforms badge if multiple types
+        if (metadata.platforms.size > 1) {
+            const platformIcons = {
+                'twitter': '🐦',
+                'tiktok': '🎵',
+                'instagram': '📸',
+                'youtube': '🎬',
+                'web': '🌐'
+            };
+            const badges = Array.from(metadata.platforms).map(p => 
+                platformIcons[p] || '🔗'
+            ).join(' ');
+            finalMsg += `${badges} **Multi-Platform Analysis**\n\n`;
         }
         
-        finalMsg += `\n\n-# ${response.model} • ${response.latency}ms 🔗`;
+        // Main answer
+        finalMsg += answer || response.text;
         
-        const parts = splitMessage(finalMsg);
+        // Add sources section
+        finalMsg += '\n\n━━━━━━━━━━━━━━━━━━━━━━\n';
+        finalMsg += `📚 **Sumber (${contents.length}):**\n`;
+        
+        contents.forEach((c, i) => {
+            const icon = c.type === 'twitter' ? '🐦' : 
+                         c.type === 'tiktok' ? '🎵' :
+                         c.type === 'instagram' ? '📸' :
+                         c.type === 'youtube' ? '🎬' : '🔗';
+            finalMsg += `${i + 1}. ${icon} [${c.title.slice(0, 60)}](${c.url})\n`;
+        });
+        
+        // Add failed URLs if any
+        if (failedUrls.length > 0) {
+            finalMsg += `\n⚠️ **${failedUrls.length} URL gagal:**\n`;
+            failedUrls.forEach(f => {
+                finalMsg += `• ${new URL(f.url).hostname} - ${f.error}\n`;
+            });
+        }
+        
+        // Add reasoning as spoiler (optional)
+        if (thinking && thinking.length > 50) {
+            const thinkingPreview = thinking.slice(0, 1500);
+            finalMsg += `\n||💭 **Reasoning Process:**\n${thinkingPreview}${thinking.length > 1500 ? '...' : ''}||`;
+        }
+        
+        // Add metadata footer
+        const processingTime = ((Date.now() - startTime) / 1000).toFixed(1);
+        finalMsg += `\n\n-# ${response.model} • ${response.latency}ms AI • ${processingTime}s total • ${contents.length}/${urls.length} sources 🔗`;
+        
+        // Send response (split if needed)
+        const parts = splitMessage(finalMsg, 1900);
         await statusMsg.edit(parts[0]);
         
         for (let i = 1; i < parts.length; i++) {
             await msg.channel.send(parts[i]);
         }
         
+        console.log(`✅ URL Analysis completed in ${processingTime}s`);
+        
     } catch (error) {
-        console.error('URL analysis error:', error);
-        await statusMsg.edit(`❌ Error: ${error.message}`);
+        console.error('❌ URL Analysis fatal error:', error);
+        await statusMsg.edit(`❌ **Terjadi error saat analisis:**\n\`\`\`\n${error.message}\n\`\`\`\n\nCoba lagi atau hubungi admin jika masalah berlanjut.`);
     }
 }
 
