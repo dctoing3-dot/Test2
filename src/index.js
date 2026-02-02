@@ -83,6 +83,13 @@ const CONFIG = {
     token: process.env.DISCORD_TOKEN,
     prefix: '.',
     adminIds: (process.env.ADMIN_IDS || '').split(',').filter(Boolean),
+        // --- TAMBAHAN BARU ---
+    puterTTS: {
+        apiUrl: 'https://puter-tts-api.onrender.com',
+        voiceId: 'gmnazjXOFoOcWA59sd5m',
+        enabled: true
+    },
+    // ---------------------
     tempPath: './temp',
     tavilyApiKey: process.env.TAVILY_API_KEY,
     serperApiKey: process.env.SERPER_API_KEY,
@@ -1028,6 +1035,42 @@ function httpRequest(options, body) {
     });
 }
 
+// --- FUNGSI BARU ---
+async function generatePuterTTS(text, options = {}) {
+    const apiUrl = CONFIG.puterTTS?.apiUrl || 'https://puter-tts-api.onrender.com';
+    const voiceId = options.voiceId || CONFIG.puterTTS?.voiceId || 'gmnazjXOFoOcWA59sd5m';
+    
+    console.log(`🎤 Puter.js TTS: Requesting...`);
+
+    try {
+        const response = await fetch(`${apiUrl}/tts`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                text: text.slice(0, 2500),
+                model: 'eleven_multilingual_v2'
+            }),
+            timeout: 60000
+        });
+
+        if (!response.ok) throw new Error(`API Error ${response.status}`);
+        const result = await response.json();
+        
+        if (!result.success || !result.audioUrl) throw new Error(result.error || 'No audio URL');
+
+        const audioRes = await fetch(result.audioUrl);
+        if (!audioRes.ok) throw new Error('Failed to download audio');
+        
+        const arrayBuffer = await audioRes.arrayBuffer();
+        return Buffer.from(arrayBuffer);
+
+    } catch (error) {
+        console.error('❌ Puter.js TTS Failed:', error.message);
+        throw error;
+    }
+}
+// -------------------
+
 // ==================== TTS FUNCTIONS ====================
 
 function cleanTextForTTS(text) {
@@ -1051,41 +1094,29 @@ function cleanTextForTTS(text) {
 async function generateTTS(text, voice, userId = null) {
     ensureTempDir();
     const outputPath = path.join(CONFIG.tempPath, `tts_${Date.now()}.mp3`);
-    const safeText = cleanTextForTTS(text).slice(0, 4500);
+    const safeText = cleanTextForTTS(text).slice(0, 2500);
 
-    if (!safeText || safeText.length < 2) {
-        throw new Error('Text too short');
-    }
+    if (!safeText || safeText.length < 2) throw new Error('Text too short');
 
-    const miniMaxKey = CONFIG.minimax?.apiKey;
     const userIsAdmin = userId ? isAdmin(String(userId)) : false;
-    const hasValidKey = miniMaxKey && miniMaxKey !== 'xxx' && miniMaxKey.length > 20;
-    
-    console.log(`🔊 TTS: userId=${userId}, isAdmin=${userIsAdmin}, hasMiniMax=${hasValidKey}`);
-    
-    // MiniMax untuk admin
-    if (userIsAdmin && hasValidKey) {
+    const usePuter = CONFIG.puterTTS?.enabled;
+
+    // 1. Coba Puter.js (ElevenLabs) jika Admin
+    if (userIsAdmin && usePuter) {
         try {
-            const miniMaxVoice = isMiniMaxVoice(voice) ? voice : CONFIG.minimax.defaultVoiceId;
-            console.log(`🎤 Using MiniMax (Admin) | Voice: ${miniMaxVoice?.substring(0, 30)}...`);
-            
-            const audioBuffer = await generateMiniMaxTTS(safeText, {
-                voiceId: miniMaxVoice,
-                speed: 1.0,
-                turbo: false
+            console.log(`🎤 Attempting Puter.js ElevenLabs...`);
+            const audioBuffer = await generatePuterTTS(safeText, {
+                voiceId: CONFIG.puterTTS.voiceId
             });
-            
             fs.writeFileSync(outputPath, audioBuffer);
-            console.log(`✅ MiniMax TTS saved: ${outputPath}`);
+            console.log(`✅ Saved Puter.js Audio: ${outputPath}`);
             return outputPath;
-            
         } catch (error) {
-            console.error('❌ MiniMax error:', error.message);
-            console.log('⚠️ Falling back to Edge-TTS...');
+            console.warn(`⚠️ Puter.js Failed, falling back to Edge-TTS...`);
         }
     }
-    
-    // Edge-TTS untuk user biasa atau fallback
+
+    // 2. Fallback ke Edge-TTS
     const edgeVoice = isEdgeTTSVoice(voice) ? voice : 'id-ID-GadisNeural';
     await generateEdgeTTS(safeText, edgeVoice, outputPath);
     console.log(`✅ Edge-TTS | Voice: ${edgeVoice}`);
@@ -4061,7 +4092,7 @@ async function handleStatusCommand(msg) {
                     `• AI Chat: ✅`,
                     `• Voice AI: ${isVoiceAIEnabled(msg.guild.id) ? '🟢 ON' : '⚪ OFF'}`,
                     `• TTS Public: Edge-TTS ✅`,
-                    `• TTS Admin: ${CONFIG.minimax?.apiKey ? 'MiniMax 🟢' : 'Edge-TTS ⚪'}`,
+                    `• TTS Admin: ${CONFIG.puterTTS?.enabled ? 'Puter.js (ElevenLabs) 🟢' : 'Edge-TTS ⚪'}`,
                     `• Web Search: ${CONFIG.serperApiKey || CONFIG.tavilyApiKey ? '✅' : '❌'}`,
                     `• Image Analysis: ${CONFIG.geminiApiKey ? '✅' : '❌'}`
                 ].join('\n'),
