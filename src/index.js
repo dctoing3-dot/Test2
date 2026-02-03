@@ -173,6 +173,12 @@ function detectURLs(message) {
     const urls = message.match(urlRegex) || [];
     return urls.filter(url => {
         const lower = url.toLowerCase();
+        
+        // Abaikan YouTube URLs (biarkan bot musik yang handle)
+        if (lower.includes('youtube.com') || lower.includes('youtu.be')) {
+            return false;
+        }
+        
         if (lower.match(/\.(jpg|jpeg|png|gif|mp4|mp3|zip|exe)$/i)) {
             return false;
         }
@@ -1938,6 +1944,7 @@ function startRecording(connection, userId, guildId, textChannel) {
     
     const recordingData = {
         chunks,
+🤣
         startTime,
         stream: opusStream,
         decoder: opusDecoder,
