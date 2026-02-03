@@ -1944,7 +1944,6 @@ function startRecording(connection, userId, guildId, textChannel) {
     
     const recordingData = {
         chunks,
-🤣
         startTime,
         stream: opusStream,
         decoder: opusDecoder,
@@ -4318,3 +4317,4 @@ client.login(CONFIG.token).then(() => {
     if (err.message.includes('DISALLOWED_INTENTS')) console.error('Enable MESSAGE CONTENT INTENT di Developer Portal!');
     process.exit(1);
 });
+
