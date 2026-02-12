@@ -1,7 +1,6 @@
 // ============================================================
-//         DYNAMIC API & MODEL MANAGER v2.3
-//         Full Embed UI + Multi Provider Sync
-//         Synced with index.js v2.18.0 models
+//         DYNAMIC API & MODEL MANAGER v2.4
+//         + Conversation & Settings Persistence
 // ============================================================
 
 const Redis = require('ioredis');
@@ -23,17 +22,33 @@ class DynamicManager {
         this.redis = null;
         this.connected = false;
         
+        // Local cache untuk performance
+        this.cache = {
+            conversations: new Map(),
+            settings: new Map(),
+            lastSync: new Map()
+        };
+        
+        // Auto-sync interval (simpan cache ke Redis setiap 2 menit)
+        this.syncInterval = null;
+        
         if (redisUrl) {
             try {
                 this.redis = new Redis(redisUrl, {
                     maxRetriesPerRequest: 3,
                     lazyConnect: true,
-                    retryDelayOnFailover: 100
+                    retryDelayOnFailover: 100,
+                    enableReadyCheck: true,
+                    reconnectOnError: (err) => {
+                        console.warn('⚠️ Redis reconnecting:', err.message);
+                        return true;
+                    }
                 });
                 
                 this.redis.on('connect', () => {
                     console.log('✅ Redis connected');
                     this.connected = true;
+                    this.startAutoSync();
                 });
                 
                 this.redis.on('error', (err) => {
@@ -44,10 +59,11 @@ class DynamicManager {
                 this.redis.on('close', () => {
                     console.warn('⚠️ Redis connection closed');
                     this.connected = false;
+                    this.stopAutoSync();
                 });
                 
                 this.redis.connect().catch((err) => {
-                    console.warn('⚠️ Redis connection failed, using ENV fallback:', err.message);
+                    console.warn('⚠️ Redis connection failed, using memory fallback:', err.message);
                     this.connected = false;
                 });
             } catch (err) {
@@ -55,78 +71,113 @@ class DynamicManager {
                 this.connected = false;
             }
         } else {
-            console.warn('⚠️ No REDIS_URL provided, using ENV fallback');
+            console.warn('⚠️ No REDIS_URL provided, using memory only');
         }
     }
 
-    // ==================== POLLINATIONS MODELS (SHARED) ====================
+    // ==================== AUTO SYNC ====================
+    
+    startAutoSync() {
+        if (this.syncInterval) return;
+        
+        this.syncInterval = setInterval(async () => {
+            await this.syncAllToRedis();
+        }, 2 * 60 * 1000); // Setiap 2 menit
+        
+        console.log('🔄 Auto-sync started (every 2 minutes)');
+    }
+    
+    stopAutoSync() {
+        if (this.syncInterval) {
+            clearInterval(this.syncInterval);
+            this.syncInterval = null;
+            console.log('⏹️ Auto-sync stopped');
+        }
+    }
+    
+    async syncAllToRedis() {
+        if (!this.connected) return;
+        
+        try {
+            // Sync conversations
+            for (const [key, conv] of this.cache.conversations) {
+                await this.redisSet(`conv:${key}`, conv);
+            }
+            
+            // Sync settings
+            for (const [guildId, settings] of this.cache.settings) {
+                await this.redisSet(`settings:${guildId}`, settings);
+            }
+            
+            console.log(`💾 Synced ${this.cache.conversations.size} conversations, ${this.cache.settings.size} settings`);
+        } catch (e) {
+            console.error('❌ Sync error:', e.message);
+        }
+    }
+    
+    // Force sync sebelum shutdown
+    async shutdown() {
+        console.log('🛑 Shutting down, saving all data...');
+        await this.syncAllToRedis();
+        this.stopAutoSync();
+        if (this.redis) {
+            await this.redis.quit();
+        }
+        console.log('✅ Shutdown complete');
+    }
+
+    // ==================== POLLINATIONS MODELS ====================
     
     getPollinationsModels() {
         return [
-            // OpenAI Models
             { id: 'openai', name: 'OpenAI GPT' },
             { id: 'openai-fast', name: 'OpenAI Fast' },
             { id: 'openai-large', name: 'OpenAI Large' },
             { id: 'openai-reasoning', name: 'OpenAI Reasoning (o3-mini)' },
             { id: 'openai-audio', name: 'OpenAI Audio (GPT-4o-audio)' },
-            // Claude Models
             { id: 'claude', name: 'Claude' },
             { id: 'claude-fast', name: 'Claude Fast' },
             { id: 'claude-large', name: 'Claude Large' },
             { id: 'claude-haiku', name: 'Claude Haiku' },
             { id: 'claude-sonnet', name: 'Claude Sonnet' },
             { id: 'claude-opus', name: 'Claude Opus' },
-            // Gemini Models
             { id: 'gemini', name: 'Gemini' },
             { id: 'gemini-fast', name: 'Gemini Fast' },
             { id: 'gemini-large', name: 'Gemini Large' },
             { id: 'gemini-search', name: 'Gemini Search' },
             { id: 'gemini-legacy', name: 'Gemini Legacy' },
             { id: 'gemini-thinking', name: 'Gemini Thinking' },
-            // DeepSeek Models
             { id: 'deepseek', name: 'DeepSeek' },
             { id: 'deepseek-v3', name: 'DeepSeek V3' },
             { id: 'deepseek-r1', name: 'DeepSeek R1' },
             { id: 'deepseek-reasoning', name: 'DeepSeek Reasoning' },
-            // Qwen Models
             { id: 'qwen', name: 'Qwen' },
             { id: 'qwen-coder', name: 'Qwen Coder' },
-            // Llama Models
             { id: 'llama', name: 'Llama' },
             { id: 'llamalight', name: 'Llama Light (70B)' },
-            // Mistral Models
             { id: 'mistral', name: 'Mistral' },
             { id: 'mistral-small', name: 'Mistral Small' },
             { id: 'mistral-large', name: 'Mistral Large' },
-            // Perplexity Models
             { id: 'perplexity-fast', name: 'Perplexity Fast' },
             { id: 'perplexity-reasoning', name: 'Perplexity Reasoning' },
-            // Chinese AI Models
             { id: 'kimi', name: 'Kimi' },
             { id: 'kimi-large', name: 'Kimi Large' },
             { id: 'kimi-reasoning', name: 'Kimi Reasoning' },
             { id: 'glm', name: 'GLM' },
             { id: 'minimax', name: 'MiniMax' },
-            // Grok Models
             { id: 'grok', name: 'Grok' },
             { id: 'grok-fast', name: 'Grok Fast' },
-            // Amazon Nova
             { id: 'nova-fast', name: 'Nova Fast (Amazon)' },
-            // Microsoft Phi
             { id: 'phi', name: 'Phi (Microsoft)' },
-            // Search/Tool Models
             { id: 'searchgpt', name: 'SearchGPT' },
-            // Creative/Art Models
             { id: 'midijourney', name: 'Midijourney' },
             { id: 'unity', name: 'Unity' },
             { id: 'rtist', name: 'Rtist' },
-            // Special/Character Models
             { id: 'evil', name: 'Evil Mode (Uncensored)' },
             { id: 'p1', name: 'P1' },
             { id: 'hormoz', name: 'Hormoz' },
             { id: 'sur', name: 'Sur' },
             { id: 'bidara', name: 'Bidara' },
-            // Education/Utility Models
             { id: 'chickytutor', name: 'ChickyTutor (Education)' },
             { id: 'nomnom', name: 'NomNom (Food)' }
         ];
@@ -269,7 +320,7 @@ class DynamicManager {
     // ==================== HELPERS ====================
     
     isAdmin(userId) {
-        return this.adminIds.includes(userId);
+        return this.adminIds.includes(String(userId));
     }
     
     maskKey(key) {
@@ -288,15 +339,218 @@ class DynamicManager {
         }
     }
     
-    async redisSet(key, value) {
+    async redisSet(key, value, expireSeconds = null) {
         if (!this.connected || !this.redis) return false;
         try {
-            await this.redis.set(key, JSON.stringify(value));
+            if (expireSeconds) {
+                await this.redis.setex(key, expireSeconds, JSON.stringify(value));
+            } else {
+                await this.redis.set(key, JSON.stringify(value));
+            }
             return true;
         } catch (e) {
             console.error('Redis SET error:', e.message);
             return false;
         }
+    }
+    
+    async redisDel(key) {
+        if (!this.connected || !this.redis) return false;
+        try {
+            await this.redis.del(key);
+            return true;
+        } catch (e) {
+            console.error('Redis DEL error:', e.message);
+            return false;
+        }
+    }
+    
+    async redisKeys(pattern) {
+        if (!this.connected || !this.redis) return [];
+        try {
+            return await this.redis.keys(pattern);
+        } catch (e) {
+            console.error('Redis KEYS error:', e.message);
+            return [];
+        }
+    }
+
+    // ==================== CONVERSATION MANAGEMENT ====================
+    
+    async getConversation(guildId, userId) {
+        const key = `${guildId}-${userId}`;
+        
+        // Cek cache dulu
+        if (this.cache.conversations.has(key)) {
+            const conv = this.cache.conversations.get(key);
+            conv.lastActivity = Date.now();
+            return conv;
+        }
+        
+        // Coba load dari Redis
+        if (this.connected) {
+            const saved = await this.redisGet(`conv:${key}`);
+            if (saved) {
+                saved.lastActivity = Date.now();
+                this.cache.conversations.set(key, saved);
+                return saved;
+            }
+        }
+        
+        // Buat baru
+        const newConv = {
+            messages: [],
+            createdAt: Date.now(),
+            lastActivity: Date.now()
+        };
+        this.cache.conversations.set(key, newConv);
+        return newConv;
+    }
+    
+    async addToConversation(guildId, userId, role, content, maxMessages = 100) {
+        const conv = await this.getConversation(guildId, userId);
+        
+        conv.messages.push({
+            role,
+            content,
+            timestamp: Date.now()
+        });
+        
+        // Limit messages
+        if (conv.messages.length > maxMessages) {
+            conv.messages = conv.messages.slice(-maxMessages);
+        }
+        
+        conv.lastActivity = Date.now();
+        
+        // Update cache
+        const key = `${guildId}-${userId}`;
+        this.cache.conversations.set(key, conv);
+        
+        // Simpan ke Redis langsung (untuk data penting)
+        if (this.connected) {
+            await this.redisSet(`conv:${key}`, conv);
+        }
+        
+        return conv;
+    }
+    
+    async clearConversation(guildId, userId) {
+        const key = `${guildId}-${userId}`;
+        
+        // Hapus dari cache
+        this.cache.conversations.delete(key);
+        
+        // Hapus dari Redis
+        if (this.connected) {
+            await this.redisDel(`conv:${key}`);
+        }
+        
+        return true;
+    }
+    
+    async getConversationStats() {
+        const stats = {
+            cached: this.cache.conversations.size,
+            redis: 0
+        };
+        
+        if (this.connected) {
+            const keys = await this.redisKeys('conv:*');
+            stats.redis = keys.length;
+        }
+        
+        return stats;
+    }
+    
+    // Cleanup old conversations (panggil dari interval)
+    async cleanupOldConversations(maxAgeMs = 7200000) { // Default 2 jam
+        const now = Date.now();
+        let cleaned = 0;
+        
+        // Cleanup cache
+        for (const [key, conv] of this.cache.conversations) {
+            if (now - conv.lastActivity > maxAgeMs) {
+                this.cache.conversations.delete(key);
+                if (this.connected) {
+                    await this.redisDel(`conv:${key}`);
+                }
+                cleaned++;
+            }
+        }
+        
+        if (cleaned > 0) {
+            console.log(`🧹 Cleaned ${cleaned} old conversations`);
+        }
+        
+        return cleaned;
+    }
+
+    // ==================== GUILD SETTINGS MANAGEMENT ====================
+    
+    getDefaultSettings() {
+        return {
+            aiProvider: 'groq',
+            aiModel: 'llama-3.3-70b-versatile',
+            ttsProvider: 'edge-tts',
+            ttsVoice: 'id-ID-ArdiNeural',
+            ttsVoiceElevenlabs: 'gmnazjXOFoOcWA59sd5m',
+            searchEnabled: true,
+            searchProvider: 'auto',
+            geminiGrounding: true
+        };
+    }
+    
+    async getSettings(guildId) {
+        // Cek cache dulu
+        if (this.cache.settings.has(guildId)) {
+            return this.cache.settings.get(guildId);
+        }
+        
+        // Coba load dari Redis
+        if (this.connected) {
+            const saved = await this.redisGet(`settings:${guildId}`);
+            if (saved) {
+                // Merge dengan default untuk handle field baru
+                const merged = { ...this.getDefaultSettings(), ...saved };
+                this.cache.settings.set(guildId, merged);
+                return merged;
+            }
+        }
+        
+        // Return default
+        const defaults = this.getDefaultSettings();
+        this.cache.settings.set(guildId, defaults);
+        return defaults;
+    }
+    
+    async updateSettings(guildId, key, value) {
+        const settings = await this.getSettings(guildId);
+        settings[key] = value;
+        
+        // Update cache
+        this.cache.settings.set(guildId, settings);
+        
+        // Simpan ke Redis
+        if (this.connected) {
+            await this.redisSet(`settings:${guildId}`, settings);
+        }
+        
+        return settings;
+    }
+    
+    async resetSettings(guildId) {
+        const defaults = this.getDefaultSettings();
+        
+        // Update cache
+        this.cache.settings.set(guildId, defaults);
+        
+        // Simpan ke Redis
+        if (this.connected) {
+            await this.redisSet(`settings:${guildId}`, defaults);
+        }
+        
+        return defaults;
     }
 
     // ==================== API KEY MANAGEMENT ====================
@@ -581,9 +835,9 @@ class DynamicManager {
             .addFields(
                 { name: '🔑 API Keys', value: apiList || '*Belum ada*', inline: true },
                 { name: '🤖 Models', value: modelList || '*Belum ada*', inline: true },
-                { name: '📊 Status', value: `Redis: ${this.connected ? '🟢 Connected' : '🔴 Offline (using ENV)'}`, inline: false }
+                { name: '📊 Status', value: `Redis: ${this.connected ? '🟢 Connected' : '🔴 Offline (memory only)'}`, inline: false }
             )
-            .setFooter({ text: 'v2.3 • Synced with index.js v2.18.0' })
+            .setFooter({ text: 'v2.4 • Full Persistence Mode' })
             .setTimestamp();
     }
     
@@ -597,7 +851,8 @@ class DynamicManager {
                         { label: '🔑 Kelola API Keys', value: 'api_menu', description: 'Tambah/hapus API keys' },
                         { label: '🤖 Kelola Models', value: 'model_menu', description: 'Tambah/hapus AI models' },
                         { label: '🔄 Sync All Models', value: 'sync_all', description: 'Sync models dari semua provider' },
-                        { label: '📊 Pool Status', value: 'pool_status', description: 'Lihat status detail' }
+                        { label: '📊 Pool Status', value: 'pool_status', description: 'Lihat status detail' },
+                        { label: '💬 Conversation Stats', value: 'conv_stats', description: 'Lihat statistik chat' }
                     ])
             )
         ];
@@ -889,6 +1144,13 @@ class DynamicManager {
                         }
                     }
                     await interaction.reply({ content: text || 'Belum ada data', ephemeral: true });
+                }
+                else if (value === 'conv_stats') {
+                    const stats = await this.getConversationStats();
+                    await interaction.reply({
+                        content: `**💬 Conversation Stats:**\n\nCached: ${stats.cached}\nRedis: ${stats.redis}\nRedis Status: ${this.connected ? '🟢' : '🔴'}`,
+                        ephemeral: true
+                    });
                 }
             }
             
